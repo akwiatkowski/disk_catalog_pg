@@ -1,0 +1,46 @@
+name: disk_catalog_pg
+version: 0.1.0
+
+authors:
+  - Aleksander Kwiatkowski <bobikx@poczta.fm>
+
+crystal: 1.9.2
+
+license: UNLICENSED
+
+targets:
+  disk_catalog_pg:
+    main: src/disk_catalog_pg.cr
+
+  amber:
+    main: lib/amber/src/amber/cli.cr
+
+dependencies:
+  amber:
+    github: amberframework/amber
+    version: 1.4.1
+
+  granite:
+    github: amberframework/granite
+    version: ~> 0.23.1
+
+  quartz_mailer:
+    github: amberframework/quartz-mailer
+    version: ~> 0.8.0
+
+  jasper_helpers:
+    github: amberframework/jasper-helpers
+    version: ~> 1.2.2 
+
+  pg:
+    github: will/crystal-pg
+    version: ~> 0.26.0
+
+  citrine-i18n:
+    github: dare892/citrine-i18n
+    version: ~> 1.0.0
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    version: ~> 1.5.0
