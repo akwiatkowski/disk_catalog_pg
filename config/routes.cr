@@ -28,9 +28,10 @@ Amber::Server.configure do
   end
 
   routes :web do
-    get "/", HomeController, :index
+    get "/", DiskController, :index
 
     resources "disks", DiskController, except: [:destroy]
+    resources "paths", PathsController, only: [:show]
 
     resources "meta_files", MetaFileController
     resources "node_files", NodeFileController

@@ -10,6 +10,6 @@
   .form-group
     == text_field(name: "path", value: disk.path, placeholder: "Path", class: "form-control")
   .form-group
-    == text_field(name: "size", value: disk.size, placeholder: "Size", class: "form-control")
+    == text_field(name: "size", value: disk.size, placeholder: "Size (1000 means 1TB)", class: "form-control")
   == submit("Submit", class: "btn btn-success btn-sm")
   == link_to("Back", "/disks", class: "btn btn-light btn-sm")

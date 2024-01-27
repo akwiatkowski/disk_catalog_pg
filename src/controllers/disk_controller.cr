@@ -4,7 +4,7 @@ class DiskController < ApplicationController
   getter disk = Disk.new
 
   before_action do
-    only [:show, :edit, :update, :destroy, :scan] { set_disk }
+    only [:show, :edit, :update, :destroy] { set_disk }
   end
 
   def index

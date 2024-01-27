@@ -10,6 +10,7 @@
         th Name
         th Path
         th Size
+        th Scanned size
         th Actions
     tbody
       - disks.each do |disk|
@@ -19,6 +20,9 @@
           td
             = (disk.size || 0.0).to_f / 1000.0
             = "TB"
+          td
+            = disk.total_disk_size_human
+            = "GB"
           td
             span
               == link_to("Show", "/disks/#{disk.id}", class: "btn btn-info btn-sm")

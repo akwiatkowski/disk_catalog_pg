@@ -5,14 +5,10 @@ h1 Show Disk
     thead
       tr
         th Path
-        th Size
-        th Actions
     tbody
       - paths.each do |path|
         tr
-          td = path.basename
-          td
-            span
+          td== link_to( (path.basename || "/").to_s , "/paths/#{path.id}", class: "btn btn-light btn-sm")
 
 
 p = disk.name

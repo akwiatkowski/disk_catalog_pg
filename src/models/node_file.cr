@@ -7,6 +7,7 @@ class NodeFile < Granite::Base
   belongs_to :node_path, optional: true
 
   column id : Int64, primary: true
+  # TODO: add basename
   column file_path : String?
   timestamps
 end

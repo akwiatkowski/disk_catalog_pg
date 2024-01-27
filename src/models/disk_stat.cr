@@ -11,4 +11,9 @@ class DiskStat < Granite::Base
   column total_disk_size : Int64?
   column total_files_count : Int64?
   timestamps
+
+  def total_disk_size_human
+    size_gbs = (total_disk_size || 0.0).to_f / (1024.0 ** 3)
+    return (size_gbs * 100.0).round / 100.0
+  end
 end
