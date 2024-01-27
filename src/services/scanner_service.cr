@@ -2,7 +2,7 @@ require "./file_entity"
 
 class ScannerService
   def initialize(
-    @disk : Disk,
+    @disk : Disk
   )
     @path = Path.new(@disk.path.not_nil!)
     @name = @disk.name.not_nil!.as(String)
@@ -15,7 +15,7 @@ class ScannerService
   def scan
     found = Dir[
       scan_pattern,
-      follow_symlinks: true,
+      follow_symlinks: false,
     ]
 
     found.each do |found_path|
@@ -41,9 +41,9 @@ class ScannerService
 
     # do not overwrite
     return if NodeFile.where(
-      file_path: entity.path.to_s,
-      disk_id: @disk.id
-    ).exists?
+                file_path: entity.path.to_s,
+                disk_id: @disk.id
+              ).exists?
 
     # metafile
     if MetaFile.where(hash: entity.hash, size: entity.size).exists?
@@ -70,7 +70,5 @@ class ScannerService
     else
       node_file = NodeFile.create(disk_id: @disk.id, meta_file_id: meta_file.not_nil!.id, file_path: entity.path.to_s)
     end
-
-
   end
 end

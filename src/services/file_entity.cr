@@ -9,12 +9,18 @@ struct FileEntity
 
     begin
       @size = File.size(@path).to_i64
+      if @size > 100_000_000_000
+        # error with file size, some special file
+        @size = 0
+      end
 
       info = File.info(@path)
       @modification_time = info.modification_time.as(Time)
       @is_directory = info.directory?.as(Bool)
     rescue File::NotFoundError
       puts "file not found: #{@path}"
+    rescue File::AccessDeniedError
+      puts "file access denied: #{@path}"
     end
   end
 
