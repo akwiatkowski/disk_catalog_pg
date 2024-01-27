@@ -16,10 +16,10 @@
         tr
           td = disk.name
           td = disk.path
-          td = disk.size
+          td
+            = (disk.size || 0.0).to_f / 1000.0
+            = "TB"
           td
             span
               == link_to("Show", "/disks/#{disk.id}", class: "btn btn-info btn-sm")
               == link_to("Edit", "/disks/#{disk.id}/edit", class: "btn btn-success btn-sm")
-              == link_to("Scan", "/disks/#{disk.id}/scan", class: "btn btn-success btn-sm")              
-              == link_to("Delete", "/disks/#{ disk.id }?_csrf=#{csrf_token}", "data-method": "delete", "data-confirm": "Are you sure?", class: "btn btn-danger btn-sm")

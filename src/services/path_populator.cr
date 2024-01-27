@@ -46,8 +46,8 @@ class PathPopulator
     parent_path_instance,
     parent_directory
   )
-    parent_path_node_id = nil
-    parent_path_node_id = parent_path_instance.id if parent_path_instance
+    parent_node_path_id = nil
+    parent_node_path_id = parent_path_instance.id if parent_path_instance
 
     relative_path = "/"
     relative_path = parent_directory if parent_directory
@@ -57,18 +57,18 @@ class PathPopulator
     # find if exists
     node_path = NodePath.find_by(
       disk_id: disk.id.not_nil!,
-      parent_path_node_id: parent_path_node_id,
+      parent_node_path_id: parent_node_path_id,
       basename: basename.to_s
     )
     if node_path.nil?
       # if not create
       node_path = NodePath.create(
         disk_id: disk.id.not_nil!,
-        parent_path_node_id: parent_path_node_id,
+        parent_node_path_id: parent_node_path_id,
         basename: basename.to_s,
         relative_path: relative_path.to_s,
       )
-      puts "created NP for parent id = #{parent_path_node_id}, basename = #{basename}, relative_path = #{relative_path}"
+      puts "created NP for parent id = #{parent_node_path_id}, basename = #{basename}, relative_path = #{relative_path}"
     end
 
     return node_path

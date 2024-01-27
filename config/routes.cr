@@ -30,17 +30,9 @@ Amber::Server.configure do
   routes :web do
     get "/", HomeController, :index
 
-    resources "disks", DiskController
-    get "/disks/:id/scan", DiskController, :scan
+    resources "disks", DiskController, except: [:destroy]
 
     resources "meta_files", MetaFileController
-
-    resources "node_files", NodeFileController
-
-    resources "disks", DiskController
-
-    resources "meta_files", MetaFileController
-
     resources "node_files", NodeFileController
   end
 

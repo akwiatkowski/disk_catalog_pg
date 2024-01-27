@@ -4,8 +4,8 @@ CREATE OR REPLACE VIEW disk_stats
 AS
   select
     disks.*,
-    sum(meta_files.size) as total_disk_size,
-    count(node_files.id) as total_files_count
+    sum(meta_files.size)::bigint as total_disk_size,
+    count(node_files.id)::bigint as total_files_count
   from disks
   join node_files on node_files.disk_id = disks.id
   join meta_files on meta_files.id = node_files.meta_file_id

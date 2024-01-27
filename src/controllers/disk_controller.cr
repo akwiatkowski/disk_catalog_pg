@@ -8,11 +8,12 @@ class DiskController < ApplicationController
   end
 
   def index
-    disks = Disk.all
+    disks = DiskStat.all
     render "index.slang"
   end
 
   def show
+    paths = NodePath.where(disk_id: disk.id, parent_node_path_id: nil)
     render "show.slang"
   end
 
@@ -22,12 +23,6 @@ class DiskController < ApplicationController
 
   def edit
     render "edit.slang"
-  end
-
-  def scan
-    service = ScannerService.new(disk: disk)
-    service.scan
-    redirect_to action: :index, flash: {"success" => "Disk #{disk.name} has been scanned"}
   end
 
   def create
@@ -51,8 +46,7 @@ class DiskController < ApplicationController
   end
 
   def destroy
-    disk.destroy
-    redirect_to action: :index, flash: {"success" => "Disk has been deleted."}
+    # TODO: remove
   end
 
   private def disk_params

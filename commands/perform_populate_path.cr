@@ -6,7 +6,10 @@ require "../src/services/path_populator"
 
 populator = PathPopulator.new
 
-(1...10_000).each do |node_file_id|
-  node_file = NodeFile.find(node_file_id)
+(820637...1_000_000).each do |node_file_id|
+  node_file = NodeFile.find_by(id: node_file_id)
+  next if node_file.nil?
+
+  # puts node_file.inspect
   populator.populate_for_node_file(node_file.not_nil!)
 end

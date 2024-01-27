@@ -2,7 +2,7 @@ class NodePath < Granite::Base
   connection pg
   table node_paths
 
-  belongs_to :parent_path_node, optional: true
+  belongs_to :parent_node_path, optional: true
   belongs_to :disk
 
   has_many :node_files
