@@ -16,11 +16,15 @@ h1 Path
     table.table.table-striped
       thead
         tr
-          th Files
+          th Id
+          th Path
+          th Size
       tbody
         - files.each do |file|
           tr
-            td== link_to( (file.file_path || "...").to_s , "/files/#{file.id}", class: "btn btn-light btn-sm")
+            td== link_to( file.id.to_s , "/files/#{file.id}", class: "btn btn-light btn-sm")
+            td== file.file_path
+            td== file.meta_file.size_human
 
 p = path.relative_path
 p = path.disk.name

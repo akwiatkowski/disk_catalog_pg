@@ -32,9 +32,7 @@ Amber::Server.configure do
 
     resources "disks", DiskController, except: [:destroy]
     resources "paths", PathsController, only: [:show]
-
-    resources "meta_files", MetaFileController
-    resources "node_files", NodeFileController
+    resources "files", FilesController, only: [:show]
   end
 
   routes :api do

@@ -10,4 +10,12 @@ class NodeFile < Granite::Base
   # TODO: add basename
   column file_path : String?
   timestamps
+
+  def basename
+    return Path.new(file_path.to_s).basename
+  end
+
+  def duplications
+    return meta_file.node_files.select { |other_node| other_node.id != self.id }
+  end
 end

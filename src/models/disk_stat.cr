@@ -1,3 +1,5 @@
+require "../services/size_tools"
+
 class DiskStat < Granite::Base
   connection pg
   table disk_stats
@@ -13,7 +15,6 @@ class DiskStat < Granite::Base
   timestamps
 
   def total_disk_size_human
-    size_gbs = (total_disk_size || 0.0).to_f / (1024.0 ** 3)
-    return (size_gbs * 100.0).round / 100.0
+    return SizeTools.to_human(total_disk_size)
   end
 end

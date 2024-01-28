@@ -1,4 +1,5 @@
 require "./file_entity"
+require "./path_populator"
 
 class ScannerService
   def initialize(
@@ -8,6 +9,8 @@ class ScannerService
     @name = @disk.name.not_nil!.as(String)
 
     @done = 0
+
+    @path_populator = PathPopulator.new
   end
 
   getter :path, :name
@@ -21,6 +24,8 @@ class ScannerService
     found.each do |found_path|
       append(Path.new(found_path))
     end
+
+    @disk.save!
   end
 
   def scan_pattern
@@ -54,11 +59,6 @@ class ScannerService
 
     meta_file_id = meta_file.not_nil!.id
 
-    # node_exists = NodeFile.where(
-    #   "file_path = ? and disk_id = #{@disk.id} and meta_file_id = #{meta_file_id}",
-    #   entity.path.to_s
-    # ).exists?
-
     node_exists = NodeFile.where(
       file_path: entity.path.to_s,
       disk_id: @disk.id,
@@ -69,6 +69,9 @@ class ScannerService
       # do nothing
     else
       node_file = NodeFile.create(disk_id: @disk.id, meta_file_id: meta_file.not_nil!.id, file_path: entity.path.to_s)
+      @path_populator.populate_for_node_file(node_file)
     end
+
+    node_file
   end
 end
