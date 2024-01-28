@@ -9,7 +9,7 @@ class MimePopulator
     meta_file = node_file.meta_file
 
     # do not overwrite
-    return unless meta_file.mime_type.nil?
+    return unless meta_file.mime_type_id.nil?
 
     mime_command = "file --mime-type \"#{node_file.file_path}\""
     mime_result = `#{mime_command}`

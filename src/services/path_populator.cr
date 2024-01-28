@@ -3,7 +3,6 @@ class PathPopulator
   end
 
   def populate_for_node_file(node_file : NodeFile)
-    puts "NF #{node_file.id} started"
     return if node_file.file_path.nil?
     return if node_file.disk.path.nil?
 
@@ -21,8 +20,6 @@ class PathPopulator
 
     parent_path_instance = nil : NodePath?
     relative_file_path.each_parent do |parent_directory|
-      # puts "** parent_directory = #{parent_directory}"
-
       parent_path_instance = create_instance(
         disk: disk,
         node_file: node_file,
