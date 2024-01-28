@@ -2,7 +2,7 @@ class Disk < Granite::Base
   connection pg
   table disks
 
-  has_many :node_paths
+  has_many node_paths : NodePath
 
   column id : Int64, primary: true
   column name : String?

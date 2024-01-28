@@ -5,6 +5,7 @@ class MetaFile < Granite::Base
   table meta_files
 
   has_many node_files : NodeFile
+  belongs_to :mime_type, optional: true
 
   column id : Int64, primary: true
   column hash : String?

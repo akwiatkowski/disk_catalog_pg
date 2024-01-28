@@ -1,5 +1,6 @@
 require "./file_entity"
 require "./path_populator"
+require "./mime_populator"
 
 class ScannerService
   def initialize(
@@ -11,6 +12,7 @@ class ScannerService
     @done = 0
 
     @path_populator = PathPopulator.new
+    @mime_populator = MimePopulator.new
   end
 
   getter :path, :name
@@ -70,6 +72,7 @@ class ScannerService
     else
       node_file = NodeFile.create(disk_id: @disk.id, meta_file_id: meta_file.not_nil!.id, file_path: entity.path.to_s)
       @path_populator.populate_for_node_file(node_file)
+      @mime_populator.populate_for_node_file(node_file)
     end
 
     node_file
