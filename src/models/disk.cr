@@ -3,6 +3,7 @@ class Disk < Granite::Base
   table disks
 
   has_many node_paths : NodePath
+  has_many node_files : NodeFile
 
   column id : Int64, primary: true
   column name : String?

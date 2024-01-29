@@ -6,10 +6,7 @@ require "../src/services/mime_populator"
 
 populator = MimePopulator.new
 
-(1...2_000_000).each do |node_file_id|
-  node_file = NodeFile.find_by(id: node_file_id)
-  next if node_file.nil?
-
-  # puts node_file.inspect
+JoinedFile.where(disk_name: "disk G", mime_type: nil).each do |joined_file|
+  node_file = NodeFile.find!(joined_file.not_nil!.id)
   populator.populate_for_node_file(node_file.not_nil!)
 end
