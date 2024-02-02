@@ -1,4 +1,4 @@
-require "../services/scanner_service"
+require "../services/helpers/tree_html_helper"
 
 class DiskController < ApplicationController
   getter disk = Disk.new
@@ -14,6 +14,7 @@ class DiskController < ApplicationController
 
   def show
     paths = NodePath.where(disk_id: disk.id, parent_node_path_id: nil)
+    tree_html = TreeHtmlHelper.new(disk: disk).to_html
     render "show.slang"
   end
 

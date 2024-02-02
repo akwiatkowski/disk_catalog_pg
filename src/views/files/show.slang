@@ -2,16 +2,34 @@ h1
   = "file: "
   = file.basename
 
-h2
+h4
   = "size: "
   = file.meta_file.size_human
 
-h3
+h4
   = "disk: "
   = file.disk.name
 
+hr
+
+h3= "This file:"
+
+.table-responsive
+  table.table.table-striped
+    thead
+      tr
+        th Id
+        th Disk
+        th Path
+    tbody
+      tr
+        - file_record = file
+        == render(partial: "_file_record.slang")
+
+h3= "Duplications:"
+
 - if duplications.empty?
-  p= "no duplications"
+  p= "there is no duplications"
 - else
   .table-responsive
     table.table.table-striped
@@ -23,6 +41,5 @@ h3
       tbody
         - duplications.each do |duplications|
           tr
-            td== link_to( duplications.id.to_s , "/files/#{duplications.id}", class: "btn btn-light btn-sm")
-            td== duplications.disk.name
-            td== duplications.file_path
+            - file_record = duplications
+            == render(partial: "_file_record.slang")

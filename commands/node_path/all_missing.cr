@@ -1,5 +1,5 @@
-require "../config/application"
-require "../src/services/path_populator"
+require "../../config/application"
+require "../../src/services/path_populator"
 
 # disable sql logs
 ::Log.setup_from_env(default_level: :none)
