@@ -31,8 +31,9 @@ Amber::Server.configure do
     get "/", DiskController, :index
 
     resources "disks", DiskController, except: [:destroy]
-    resources "paths", PathsController, only: [:show]
+    resources "paths", PathsController, only: [:show, :edit, :update]
     resources "files", FilesController, only: [:show]
+    resources "tags", TagsController, only: [:show]
   end
 
   routes :api do

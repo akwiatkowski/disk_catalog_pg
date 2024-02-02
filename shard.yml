@@ -30,7 +30,7 @@ dependencies:
 
   jasper_helpers:
     github: amberframework/jasper-helpers
-    version: ~> 1.2.2 
+    version: ~> 1.2.2
 
   pg:
     github: will/crystal-pg
