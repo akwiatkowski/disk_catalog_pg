@@ -10,5 +10,6 @@ class NodePath < Granite::Base
   column id : Int64, primary: true
   column relative_path : String?
   column basename : String?
+  column size : Int64?
   timestamps
 end

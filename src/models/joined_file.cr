@@ -1,6 +1,6 @@
 class JoinedFile < Granite::Base
   connection pg
-  table node_files
+  table joined_files
 
   belongs_to :meta_file
   belongs_to :disk

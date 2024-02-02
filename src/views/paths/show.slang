@@ -5,18 +5,22 @@ h1 Path
     table.table.table-striped
       thead
         tr
+          td Dir id
           th Subdirectories
+          th Size
       tbody
         - child_paths.each do |child_path|
           tr
-            td== link_to( (child_path.basename || "/").to_s , "/paths/#{child_path.id}", class: "btn btn-light btn-sm")
+            td== link_to( child_path.id.to_s , "/paths/#{child_path.id}", class: "btn btn-light btn-sm")
+            td== child_path.basename || "N/A"
+            td== SizeTools.to_human(child_path.size)
 
 - if files.exists?
   .table-responsive
     table.table.table-striped
       thead
         tr
-          th Id
+          th File id
           th Path
           th Size
       tbody

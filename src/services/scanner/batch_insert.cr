@@ -18,7 +18,7 @@ class Scanner::BatchInsert
   def make_it_so
     @max_index = file_entities.size.as(Int32)
 
-    puts "start saving to DB #{file_entities.size} entities"
+    puts "* #{Time.lh}: start saving to DB #{file_entities.size} entities"
     iterate_batches
   end
 
@@ -48,7 +48,7 @@ class Scanner::BatchInsert
   def iterate_batches
     while @index < @max_index
       batch = file_entities[@index...@to_index]
-      puts "save batch from #{@index} to #{@to_index}, #{batch.size} entries" if DEBUG_PUTS
+      puts "↑ #{Time.lh}: save batch from #{@index} to #{@to_index}, #{batch.size} entries" if DEBUG_PUTS
 
       save_meta_file_batch(batch)
       save_node_file_batch(batch)
@@ -74,7 +74,7 @@ class Scanner::BatchInsert
 
     MetaFile.import(meta_files, ignore_on_duplicate: true)
 
-    puts "imported #{meta_files.size} MetaFile instances, index #{@index}/#{@max_index}, taking #{(Time.local - t).milliseconds / 1000.0} s"
+    puts "+ #{Time.lh}: imported #{meta_files.size} MetaFile instances, index #{@index}/#{@max_index}, taking #{(Time.local - t).milliseconds / 1000.0} s"
   end
 
   def save_node_file_batch(batch)
@@ -95,6 +95,6 @@ class Scanner::BatchInsert
 
     NodeFile.import(node_files, ignore_on_duplicate: true)
 
-    puts "imported #{node_files.size} NodeFile instances, index #{@index}/#{@max_index}, taking #{(Time.local - t).milliseconds / 1000.0} s"
+    puts "+ #{Time.lh}: imported #{node_files.size} NodeFile instances, index #{@index}/#{@max_index}, taking #{(Time.local - t).milliseconds / 1000.0} s"
   end
 end

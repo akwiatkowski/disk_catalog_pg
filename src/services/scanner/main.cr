@@ -1,3 +1,5 @@
+require "../tools/time"
+
 require "./disk_scanner"
 require "./existing_state"
 require "./pre_filter"

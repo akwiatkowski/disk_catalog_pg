@@ -22,7 +22,7 @@ class Scanner::CalculateEntitiesHash
       total_files_size += file_entity.size
     end
 
-    puts "start to generate hash for #{@file_entities.size} files (size > #{MIN_FILE_SIZE / 1024}kB), #{(total_files_size / (1024 ** 2)).round.to_i} MB"
+    puts "* #{Time.lh}: start to generate hash for #{@file_entities.size} files (size > #{MIN_FILE_SIZE / 1024}kB), #{(total_files_size / (1024 ** 2)).round.to_i} MB"
 
     start_time = Time.local
     size_hashed_files_bytes = 0_i64
@@ -39,7 +39,7 @@ class Scanner::CalculateEntitiesHash
       eta_time_in_seconds = (total_files_size.to_f - size_hashed_files_bytes.to_f) / hash_speed_bytes_per_second.to_f
 
       if ((i + 1) % @batch_size == 0)
-        puts "... generated hash for #{i}/#{@file_entities.size} with speed of #{hash_speed_mega_bytes_per_second.to_i} MB/s, ETA #{eta_time_in_seconds.to_i} s"
+        puts "↑ #{Time.lh}: generated hash for #{i}/#{@file_entities.size} with speed of #{hash_speed_mega_bytes_per_second.to_i} MB/s, ETA #{eta_time_in_seconds.to_i} s"
       end
     end
   end
