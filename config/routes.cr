@@ -33,6 +33,8 @@ Amber::Server.configure do
     get "/files/search", FilesController, :search
     get "/files/search/:query", FilesController, :search
 
+    get "/duplication/needed", DuplicationsController, :need_duplication
+
     resources "disks", DiskController, except: [:destroy]
     resources "paths", PathsController, only: [:show, :edit, :update]
     resources "tags", TagsController, only: [:index, :show]

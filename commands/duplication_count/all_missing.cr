@@ -4,8 +4,6 @@ require "../../src/services/path_populator"
 # disable sql logs
 ::Log.setup_from_env(default_level: :none)
 
-populator = PathPopulator.new
-
 i = 0_i64
 duplications = 0_i64
 

@@ -10,7 +10,12 @@ li.nav-item class=active
 - active = context.request.path == "/files/search" ? "active" : ""
 li.nav-item class=active
   a class="nav-link" href="/files/search" Search
-    
+|
+
+- active = context.request.path == "/duplication/needed" ? "active" : ""
+li.nav-item class=active
+  a class="nav-link" href="/duplication/needed" Needs duplication
+
 - if false
   - active = context.request.path == "/meta_files" ? "active" : ""
   li.nav-item class=active
