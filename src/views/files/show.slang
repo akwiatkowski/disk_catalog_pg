@@ -1,6 +1,6 @@
 h1
   = "file: "
-  = file.basename
+  = file.basename.to_s
 
 h4
   = "size: "
@@ -21,6 +21,7 @@ h3= "This file:"
         th Id
         th Disk
         th Path
+        th Name
         th Size
     tbody
       tr
@@ -39,6 +40,7 @@ h3= "Duplications:"
           th Id
           th Disk
           th Path
+          th Name
           th Size
       tbody
         - duplications.each do |duplications|

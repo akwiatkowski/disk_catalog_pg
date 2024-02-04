@@ -30,11 +30,13 @@ Amber::Server.configure do
   routes :web do
     get "/", DiskController, :index
 
+    get "/files/search", FilesController, :search
+    get "/files/search/:query", FilesController, :search
+
     resources "disks", DiskController, except: [:destroy]
     resources "paths", PathsController, only: [:show, :edit, :update]
+    resources "tags", TagsController, only: [:index, :show]
     resources "files", FilesController, only: [:show]
-    get "/files/search/:query", FilesController, :search
-    resources "tags", TagsController, only: [:show]
   end
 
   routes :api do

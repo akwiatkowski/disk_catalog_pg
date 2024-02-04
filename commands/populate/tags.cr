@@ -6,6 +6,8 @@ tags = [
   ["raw", "Camera RAW, gopro raws, camera and drone raw videos"],
   ["todo", "Stuff that needs to be filtered"],
   ["content", "Archive stuff"],
+  ["backup", "Backup of home-directory and misc stuff"],
+  ["special", "Can be assigned by other tag but this is much more delicate content"],
 ]
 
 tags.each do |tag_array|

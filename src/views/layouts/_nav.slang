@@ -4,7 +4,13 @@ li.nav-item class=active
 - active = context.request.path == "/disks" ? "active" : ""
 li.nav-item class=active
   a class="nav-link" href="/disks" Disks
-
+- active = context.request.path == "/tags" ? "active" : ""
+li.nav-item class=active
+  a class="nav-link" href="/tags" Tags
+- active = context.request.path == "/files/search" ? "active" : ""
+li.nav-item class=active
+  a class="nav-link" href="/files/search" Search
+    
 - if false
   - active = context.request.path == "/meta_files" ? "active" : ""
   li.nav-item class=active

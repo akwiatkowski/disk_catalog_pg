@@ -9,6 +9,7 @@ class JoinedFile < Granite::Base
   column id : Int64, primary: true
   column file_path : String?
   column basename : String?
+  column node_path_basename : String?
   column file_extension : String?
   column hash : String?
   column size : Int64?
@@ -16,4 +17,8 @@ class JoinedFile < Granite::Base
   column disk_name : String?
   column mime_type : String?
   timestamps
+
+  def duplications
+    return meta_file.joined_files.select { |other_node| other_node.id != self.id }
+  end
 end

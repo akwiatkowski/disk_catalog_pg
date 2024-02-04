@@ -1,19 +1,22 @@
 class FilesController < ApplicationController
   def show
-    file = NodeFile.find!(params[:id])
+    file = JoinedFile.find!(params[:id])
     duplications = file.duplications
 
     render "show.slang"
   end
 
   def search
-    # TODO: create PG view with file size
+    query = false
+    count = 0
+    files = Array(JoinedFile).new
 
-    # basename or relative_path
-    scope = NodeFile.where("file_path ilike '%#{params[:query]}%'")
-    # scope = NodeFile.where(["file_path ilike '%?%'", params[:query]])
-    count = scope.count
-    files = scope.limit(100)
+    if params[:query]?.to_s.size > 2
+      query = true
+      scope = JoinedFile.where("file_path ilike '%#{params[:query]}%'")
+      count = scope.count
+      files = scope.limit(100)
+    end
 
     render "search.slang"
   end

@@ -5,6 +5,7 @@ class MetaFile < Granite::Base
   table meta_files
 
   has_many node_files : NodeFile
+  has_many joined_files : JoinedFile # , foreign_key: :node_file_id
   belongs_to :mime_type, optional: true
 
   column id : Int64, primary: true

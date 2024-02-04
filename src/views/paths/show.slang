@@ -50,7 +50,7 @@ h3
         - files.each do |file|
           tr
             td== link_to( file.id.to_s , "/files/#{file.id}", class: "btn btn-light btn-sm")
-            td== link_to( file.basename , "/files/#{file.id}", class: "btn btn-light btn-sm")
+            td== link_to( file.basename.to_s , "/files/#{file.id}", class: "btn btn-light btn-sm")
             td== file.meta_file.size_human
 
 p = path.relative_path

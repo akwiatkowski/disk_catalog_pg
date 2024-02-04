@@ -10,10 +10,11 @@ class NodeFile < Granite::Base
   column file_path : String?
   column basename : String?
   column file_extension : String?
+  column materialized_duplication_count : Int32?
   timestamps
 
-  def basename
-    return Path.new(file_path.to_s).basename
+  def parent_path
+    return Path.new(file_path.to_s).parent
   end
 
   def duplications
