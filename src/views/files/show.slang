@@ -21,6 +21,7 @@ h3= "This file:"
         th Id
         th Disk
         th Path
+        th Size
     tbody
       tr
         - file_record = file
@@ -38,6 +39,7 @@ h3= "Duplications:"
           th Id
           th Disk
           th Path
+          th Size
       tbody
         - duplications.each do |duplications|
           tr
