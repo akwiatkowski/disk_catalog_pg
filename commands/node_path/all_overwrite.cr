@@ -5,4 +5,4 @@ require "../../src/services/processors/generate_node_paths"
 ::Log.setup_from_env(default_level: :none)
 
 populator = GenerateNodePaths.new
-populator.all_missing
+populator.all_overwrite

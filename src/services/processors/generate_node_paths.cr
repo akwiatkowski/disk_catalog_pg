@@ -1,5 +1,38 @@
-class PathPopulator
-  def initialize
+class GenerateNodePaths
+  def initialize(@debug = false)
+  end
+
+  def all_overwrite
+    process_nfs(nfs_overwrite)
+  end
+
+  def all_missing
+    process_nfs(nfs_missing)
+  end
+
+  def nfs_overwrite
+    return NodeFile.all
+  end
+
+  def nfs_missing
+    return NodeFile.where(node_path_id: nil)
+  end
+
+  def process_nfs(nfs)
+    i = 0_i64
+    duplications = 0_i64
+    count = nfs.size
+
+    nfs.each do |node_file|
+      puts "start" if i == 0
+
+      populate_for_node_file(node_file)
+
+      i += 1
+      if (i % 1000) == 0
+        puts "#{i}/#{count} NF generated paths (NodePath)"
+      end
+    end
   end
 
   def populate_for_node_file(node_file : NodeFile)
@@ -33,7 +66,7 @@ class PathPopulator
       node_file.node_path_id = parent_path_instance.not_nil!.id
       node_file.save
 
-      puts "NF #{node_file.id} assign NP #{parent_path_instance.id} = #{parent_path_instance.relative_path}"
+      puts "NF #{node_file.id} assign NP #{parent_path_instance.id} = #{parent_path_instance.relative_path}" if @debug
     end
   end
 
@@ -65,7 +98,7 @@ class PathPopulator
         basename: basename.to_s,
         relative_path: relative_path.to_s,
       )
-      puts "created NP for parent id = #{parent_node_path_id}, basename = #{basename}, relative_path = #{relative_path}"
+      puts "created NP for parent id = #{parent_node_path_id}, basename = #{basename}, relative_path = #{relative_path}" if @debug
     end
 
     return node_path
