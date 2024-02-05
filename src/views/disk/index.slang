@@ -21,8 +21,7 @@
             = (disk.size || 0.0).to_f / 1000.0
             = "TB"
           td
-            = disk.total_disk_size_human
-            = "GB"
+            = SizeTools.to_human(disk.indexed_size)
           td
             span
               == link_to("Show", "/disks/#{disk.id}", class: "btn btn-info btn-sm")

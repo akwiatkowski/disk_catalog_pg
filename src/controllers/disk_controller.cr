@@ -8,13 +8,17 @@ class DiskController < ApplicationController
   end
 
   def index
-    disks = DiskStat.all
+    disks = Disk.order(name: :asc)
     render "index.slang"
   end
 
   def show
     paths = NodePath.where(disk_id: disk.id, parent_node_path_id: nil)
-    tree_html = TreeHtmlHelper.new(disk: disk).to_html
+    tree_html = TreeHtmlHelper.new(
+      disk: disk,
+      show_all_levels: params[:show_all_levels]?,
+      column_order: params[:column_order]?
+    ).to_html
     render "show.slang"
   end
 

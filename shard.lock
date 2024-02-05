@@ -52,6 +52,10 @@ shards:
     git: https://github.com/amberframework/granite.git
     version: 0.23.3
 
+  granite-paginate:
+    git: https://github.com/nicolab/granite-paginate.git
+    version: 1.1.1
+
   i18n:
     git: https://github.com/dare892/i18n.cr.git
     version: 0.3.1+git.commit.00b38087fb9a430f32d77ecd51e563f3a16432d9

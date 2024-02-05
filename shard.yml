@@ -40,6 +40,9 @@ dependencies:
     github: dare892/citrine-i18n
     version: ~> 1.0.0
 
+  granite-paginate:
+    github: nicolab/granite-paginate
+
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba

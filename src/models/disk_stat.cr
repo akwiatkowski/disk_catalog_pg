@@ -13,8 +13,4 @@ class DiskStat < Granite::Base
   column total_disk_size : Int64?
   column total_files_count : Int64?
   timestamps
-
-  def total_disk_size_human
-    return SizeTools.to_human(total_disk_size)
-  end
 end

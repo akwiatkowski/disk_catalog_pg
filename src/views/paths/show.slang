@@ -14,7 +14,6 @@ h3
     == "parent: "
     == link_to( path.parent_node_path.relative_path || "N/A", "/paths/#{path.parent_node_path_id}", class: "btn btn-light btn-sm")
 
-
 - if child_paths.exists?
   .table-responsive
     table.table.table-striped
@@ -46,12 +45,14 @@ h3
           th File id
           th Path
           th Size
+          th Duplications
       tbody
         - files.each do |file|
           tr
             td== link_to( file.id.to_s , "/files/#{file.id}", class: "btn btn-light btn-sm")
             td== link_to( file.basename.to_s , "/files/#{file.id}", class: "btn btn-light btn-sm")
             td== file.meta_file.size_human
+            td== file.materialized_duplication_count
 
 p = path.relative_path
 p = path.disk.name
