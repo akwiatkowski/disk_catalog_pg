@@ -20,14 +20,17 @@ h3
       thead
         tr
           th Dir id
-          th Subdirectories
+          th Disk
+          th Subdirectory
           th Tag
           th Size
+          th D.factor
           th Actions
       tbody
         - child_paths.each do |child_path|
           tr
             td== link_to( child_path.id.to_s , "/paths/#{child_path.id}", class: "btn btn-light btn-sm")
+            td== link_to( child_path.disk.name.to_s , "/disks/#{child_path.disk_id}", class: "btn btn-light btn-sm")
             td== link_to( child_path.basename || "N/A" , "/paths/#{child_path.id}", class: "btn btn-light btn-sm")
             td
               - if child_path.tag_id
@@ -35,6 +38,7 @@ h3
               - else
                 == "N/A"
             td== SizeTools.to_human(child_path.size)
+            td== child_path.materialized_duplication_factor || "N/A"
             td== link_to( "Edit" , "/paths/#{child_path.id}/edit", class: "btn btn-light btn-sm")
 
 - if files.exists?
