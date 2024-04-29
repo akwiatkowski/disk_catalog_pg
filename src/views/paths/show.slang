@@ -37,6 +37,11 @@ h3
                 == link_to( child_path.tag.name , "/tags/#{child_path.tag_id}", class: "btn btn-light btn-sm")
               - else
                 == "N/A"
+              = " | "
+              - if child_path.move_tag_id
+                == link_to( child_path.move_tag.name , "/move_tags/#{child_path.tag_id}", class: "btn btn-light btn-sm")
+              - else
+                == "N/A"
             td== SizeTools.to_human(child_path.size)
             td== child_path.materialized_duplication_factor || "N/A"
             td== link_to( "Edit" , "/paths/#{child_path.id}/edit", class: "btn btn-light btn-sm")

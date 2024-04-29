@@ -8,6 +8,11 @@ tags = [
   ["content", "Archive stuff"],
   ["backup", "Backup of home-directory and misc stuff"],
   ["special", "Can be assigned by other tag but this is much more delicate content"],
+  ["movies", "Full length movies, not from youtube"],
+  ["youtube", "Youtube content, short misc movies"],
+  ["series", "TV series"],
+  ["delete", "Confirm and remove"],
+  ["stuff", "Misc content"],
 ]
 
 tags.each do |tag_array|

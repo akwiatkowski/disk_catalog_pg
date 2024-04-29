@@ -19,4 +19,5 @@
           td = tag.description
           td
             span
-              == link_to("Show", "/tags/#{tag.id}", class: "btn btn-info btn-sm")
+              == link_to("Details", "/tags/#{tag.id}", class: "btn btn-info btn-sm")
+              == link_to("Move", "/move/tags/#{tag.id}", class: "btn btn-info btn-sm")

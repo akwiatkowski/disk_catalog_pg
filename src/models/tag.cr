@@ -13,4 +13,13 @@ class Tag < Granite::Base
   timestamps
 
   has_many node_paths : NodePath
+  has_many move_node_paths : NodePath, foreign_key: :move_tag_id
+
+  def move_paths_count
+    # puts "*"
+    # puts NodePath.where(move_tag_id: self.id).count.to_s.inspect
+    #
+    # return 0
+    return NodePath.where(move_tag_id: self.id).count.to_s.to_i
+  end
 end

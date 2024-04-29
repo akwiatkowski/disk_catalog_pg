@@ -17,7 +17,7 @@ class PathsController < ApplicationController
   end
 
   def update
-    path.set_attributes path_params.validate!
+    path.set_attributes validated_params
     if path.save
       redirect_to "/paths/#{path.id}", flash: {"success" => "Path has been updated."}
     else
@@ -28,8 +28,21 @@ class PathsController < ApplicationController
 
   private def path_params
     params.validation do
-      required :tag_id
+      optional :tag_id
+      optional :move_tag_id
     end
+  end
+
+  private def validated_params
+    pars = path_params.validate!
+
+    pars.keys.each do |key|
+      if pars[key].to_s == ""
+        pars[key] = nil
+      end
+    end
+
+    return pars
   end
 
   private def set_path

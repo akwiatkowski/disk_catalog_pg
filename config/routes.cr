@@ -39,6 +39,14 @@ Amber::Server.configure do
     resources "paths", PathsController, only: [:show, :edit, :update]
     resources "tags", TagsController, only: [:index, :show]
     resources "files", FilesController, only: [:show]
+
+    resources "move/tags", Move::TagsController, only: [:index, :show]
+
+    # # tools for helping move content to maintain proper redundancy
+    # namespace "move" do
+    #   # resources "tags", Move::TagsController, only: [:index]
+    #   get "/tags", Move::TagsController, :index
+    # end
   end
 
   routes :api do
