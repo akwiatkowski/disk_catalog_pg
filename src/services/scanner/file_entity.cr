@@ -3,27 +3,41 @@ require "digest/md5"
 require "./hash_cache"
 
 struct FileEntity
-  def initialize(@path : Path)
-    @size = 0.to_i64
-    @modification_time = Time.local
-    @is_directory = false
-    @hash = ""
-    @mime_type = ""
+  def initialize(@path : Path, @cache_unit : Scanner::FullCache::Unit? = nil)
+    if @cache_unit
+      # if @cache_unit is provided it doesn't touch disk!
 
-    begin
-      @size = File.size(@path).to_i64
-      if @size > 100_000_000_000
-        # error with file size, some special file
-        @size = 0
+      cu = @cache_unit.not_nil!
+
+      @size = cu.size
+      @modification_time = cu.modification_time
+      @is_directory = cu.is_directory
+      @hash = cu.hash
+      @mime_type = cu.mime_type
+    else
+      # regular way, when disk access
+      # it takes a lot of time because of hash generation
+      @size = 0.to_i64
+      @modification_time = Time.local
+      @is_directory = false
+      @hash = ""
+      @mime_type = ""
+
+      begin
+        @size = File.size(@path).to_i64
+        if @size > 100_000_000_000
+          # error with file size, some special file
+          @size = 0
+        end
+
+        info = File.info(@path)
+        @modification_time = info.modification_time.as(Time)
+        @is_directory = info.directory?.as(Bool)
+      rescue File::NotFoundError
+        puts "file not found: #{@path}"
+      rescue File::AccessDeniedError
+        puts "file access denied: #{@path}"
       end
-
-      info = File.info(@path)
-      @modification_time = info.modification_time.as(Time)
-      @is_directory = info.directory?.as(Bool)
-    rescue File::NotFoundError
-      puts "file not found: #{@path}"
-    rescue File::AccessDeniedError
-      puts "file access denied: #{@path}"
     end
   end
 

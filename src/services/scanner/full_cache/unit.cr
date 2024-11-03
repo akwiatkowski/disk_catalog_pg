@@ -8,6 +8,8 @@ struct Scanner::FullCache::Unit
   @mime_type : String
   @is_directory : Bool
 
+  getter :hash, :size, :cache_time, :modification_time, :mime_type, :is_directory
+
   def initialize(file_path : String)
     file_entity = ::FileEntity.new(path: Path.new(file_path))
 

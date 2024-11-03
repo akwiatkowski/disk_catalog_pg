@@ -5,8 +5,8 @@ require "./unit"
 # hash locally. So you can run disk related operation w/o having
 # disk connected. WIP
 class Scanner::FullCache::Scanner
-  FORCE_SAVE_AFTER = 500
-  DEBUG_PUTS       = false
+  FORCE_SAVE_AFTER = 200
+  DEBUG_PUTS       = true
 
   def initialize(@disk : Disk)
     @disk_path = Path.new(disk.path.not_nil!)
@@ -30,6 +30,12 @@ class Scanner::FullCache::Scanner
   end
 
   def save
+    # just for backup
+    File.rename(
+      old_filename: @cache_path,
+      new_filename: "#{@cache_path}.bak"
+    ) if File.exists?(@cache_path)
+
     puts "save cache_path=#{@cache_path}" if DEBUG_PUTS
     File.open(@cache_path, "w") do |f|
       @cache.to_yaml(f)
@@ -44,7 +50,10 @@ class Scanner::FullCache::Scanner
     @disk_scanner.make_it_so
     @disk_scanner.file_paths.each do |file_path|
       if self[file_path]?.nil?
-        self[file_path] = Unit.new(file_path: file_path)
+        begin
+          self[file_path] = Unit.new(file_path: file_path)
+        rescue File::NotFoundError
+        end
       end
     end
 
