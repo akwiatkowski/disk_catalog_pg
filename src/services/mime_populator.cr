@@ -11,9 +11,7 @@ class MimePopulator
     # do not overwrite
     return unless meta_file.mime_type_id.nil?
 
-    mime_command = "file --mime-type \"#{node_file.file_path}\""
-    mime_result = `#{mime_command}`
-    mime_string = mime_result.gsub(/[^:]+: /, "").strip
+    mime_string = self.class.mime_type_for_file(node_file.file_path)
 
     mime_instance = MimeType.find_by(name: mime_string)
     if mime_instance.nil?
@@ -24,5 +22,12 @@ class MimePopulator
     meta_file.save
 
     puts "NF #{node_file.id}, MF #{meta_file.id} set mime #{mime_instance.id} = #{mime_instance.name}"
+  end
+
+  def self.mime_type_for_file(file_path)
+    mime_command = "file --mime-type \"#{file_path}\""
+    mime_result = `#{mime_command}`
+    mime_string = mime_result.gsub(/[^:]+: /, "").strip
+    return
   end
 end

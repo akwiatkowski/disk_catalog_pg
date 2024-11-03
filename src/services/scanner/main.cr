@@ -1,6 +1,8 @@
 require "../tools/time"
 require "../tools/logging"
 
+require "./full_cache/scanner"
+
 require "./disk_scanner"
 require "./existing_state"
 require "./pre_filter"

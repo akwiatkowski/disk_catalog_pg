@@ -29,4 +29,8 @@ class Disk < Granite::Base
       return nil
     end
   end
+
+  def slug
+    return self.name.not_nil!.gsub(/\W/, "_")
+  end
 end
