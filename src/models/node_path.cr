@@ -28,4 +28,15 @@ class NodePath < Granite::Base
     self.materialized_duplication_factor = (df_sum.to_f * 100.0 / df_count.to_f).round.to_i
     self.save!
   end
+
+  def self_and_subdirectories
+    node_paths = Array(NodePath).new
+    node_paths << self
+
+    children_node_paths.each do |path|
+      node_paths += path.self_and_subdirectories
+    end
+
+    return node_paths.uniq
+  end
 end

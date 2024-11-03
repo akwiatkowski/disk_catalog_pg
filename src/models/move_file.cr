@@ -4,7 +4,7 @@ class MoveFile < Granite::Base
 
   belongs_to :node_path
   belongs_to :meta_file
-  belongs_to :tag
+  belongs_to :tag, optional: true
   belongs_to :disk
   belongs_to :node_file
 
@@ -12,7 +12,7 @@ class MoveFile < Granite::Base
   column relative_path : String
   column path_basename : String
   column file_size : Int64
-  column tag_name : String
+  column tag_name : String?
   column disk_name : String
   column file_path : String
   column file_basename : String

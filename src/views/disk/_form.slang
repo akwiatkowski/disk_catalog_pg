@@ -8,6 +8,8 @@
   .form-group
     == text_field(name: "name", value: disk.name, placeholder: "Name", class: "form-control")
   .form-group
+    == text_field(name: "description", value: disk.description, placeholder: "Description", class: "form-control")
+  .form-group
     == text_field(name: "path", value: disk.path, placeholder: "Path", class: "form-control")
   .form-group
     == text_field(name: "size", value: disk.size, placeholder: "Size (1000 means 1TB)", class: "form-control")

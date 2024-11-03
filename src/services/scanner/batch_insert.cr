@@ -1,7 +1,7 @@
 class Scanner::BatchInsert
   # https://docs.amberframework.org/granite/docs/imports
 
-  DEBUG_PUTS = false
+  DEBUG_PUTS = true
 
   def initialize(
     @disk : Disk,
@@ -16,9 +16,10 @@ class Scanner::BatchInsert
   end
 
   def make_it_so
+    puts_log "start"
     @max_index = file_entities.size.as(Int32)
 
-    puts "* #{Time.lh}: start saving to DB #{file_entities.size} entities"
+    puts_log "* #{Time.lh}: start saving to DB #{file_entities.size} entities"
     iterate_batches
   end
 
@@ -48,7 +49,7 @@ class Scanner::BatchInsert
   def iterate_batches
     while @index < @max_index
       batch = file_entities[@index...@to_index]
-      puts "↑ #{Time.lh}: save batch from #{@index} to #{@to_index}, #{batch.size} entries" if DEBUG_PUTS
+      puts_log "↑ #{Time.lh}: save batch from #{@index} to #{@to_index}, #{batch.size} entries" if DEBUG_PUTS
 
       save_meta_file_batch(batch)
       save_node_file_batch(batch)

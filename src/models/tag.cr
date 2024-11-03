@@ -16,10 +16,17 @@ class Tag < Granite::Base
   has_many move_node_paths : NodePath, foreign_key: :move_tag_id
 
   def move_paths_count
-    # puts "*"
-    # puts NodePath.where(move_tag_id: self.id).count.to_s.inspect
-    #
-    # return 0
     return NodePath.where(move_tag_id: self.id).count.to_s.to_i
+  end
+
+  # direct and subdirectories
+  def node_paths_and_subdirectories
+    node_paths = Array(NodePath).new
+
+    NodePath.where(move_tag_id: self.id).each do |path|
+      node_paths += path.self_and_subdirectories
+    end
+
+    return node_paths.uniq
   end
 end

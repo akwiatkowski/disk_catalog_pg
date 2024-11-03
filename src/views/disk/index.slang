@@ -9,6 +9,7 @@
       tr
         th Name
         th Path
+        th Description
         th Size
         th Scanned size
         th Actions
@@ -16,7 +17,8 @@
       - disks.each do |disk|
         tr
           td = disk.name
-          td = disk.path
+          td = disk.path_truncated
+          td = disk.description
           td
             = (disk.size || 0.0).to_f / 1000.0
             = "TB"

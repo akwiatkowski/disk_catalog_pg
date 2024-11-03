@@ -1,4 +1,5 @@
 require "../tools/time"
+require "../tools/logging"
 
 require "./disk_scanner"
 require "./existing_state"
@@ -28,6 +29,8 @@ class Scanner::Main
   )
     @path = Path.new(@disk.path.not_nil!)
     @name = @disk.name.not_nil!.as(String)
+
+    puts_log "starting for #{@name}"
 
     @disk_scanner = DiskScanner.new(path: @path)
     @existing_state = ExistingState.new(disk: @disk)

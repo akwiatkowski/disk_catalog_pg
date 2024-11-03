@@ -1,5 +1,5 @@
 class Move::TagMoveScript
-  def initialize(tag : Tag)
+  def initialize(tag : Tag, prefer_move = false)
     @tag = tag
     @script_per_disk = Hash(Int64, String).new
     @meta_file_ids = Array(Int64).new
@@ -7,22 +7,23 @@ class Move::TagMoveScript
     @sum_total = 0_i64
     @sum_uniq = 0_i64
 
-    @debug = true
+    @debug = false
+    @prefer_move = prefer_move
+
+    @move_command = "cp"
+    @move_command = "mv" if @prefer_move
   end
 
   getter :debug
 
   private def paths
-    NodePath.where(move_tag_id: @tag.id)
+    @tag.node_paths_and_subdirectories
   end
 
   def make_it_so
     paths.each do |path|
       disk_id = path.disk.id.not_nil!
       move_file_scope = MoveFile.where(node_path_id: path.id)
-
-      # TODO: files in subdirectories also
-      # get all node_paths and filter using array of node_path_id
 
       if @script_per_disk[disk_id]?.nil?
         @script_per_disk[disk_id] = "# disk: #{path.disk.name} \n"
@@ -40,14 +41,20 @@ class Move::TagMoveScript
 
           already_copied = @meta_file_ids.includes?(move_file.meta_file_id)
           if already_copied
-            s << "# file #{move_file.file_path} has already been copied \n"
+            if debug
+              s << "# file #{move_file.file_path} has already been copied \n"
+            end
 
             @sum_total += move_file.file_size
           else
-            s << "# file #{move_file.file_path} size #{SizeTools.to_human(move_file.file_size)} \n"
-            s << "cp \"#{move_file.file_path}\" \"./#{move_file.move_relative_path}/#{move_file.file_basename}\" \n"
-            @meta_file_ids << move_file.meta_file_id.not_nil!
+            if debug
+              s << "# file #{move_file.file_path} size #{SizeTools.to_human(move_file.file_size)} \n"
+            end
+            # TODO: add `mkdir -p /foo/bar`
+            s << "mkdir -p \"./#{move_file.move_relative_path}\""
+            s << "#{@move_command} \"#{move_file.file_path}\" \"./#{move_file.move_relative_path}/#{move_file.file_basename}\" -v \n"
 
+            @meta_file_ids << move_file.meta_file_id.not_nil!
             @sum_uniq += move_file.file_size
             @sum_total += move_file.file_size
           end

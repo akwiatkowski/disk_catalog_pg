@@ -23,9 +23,9 @@ AS
 
   from node_files
   join node_paths on node_files.node_path_id = node_paths.id
-  join tags on node_paths.move_tag_id = tags.id
   join meta_files on meta_files.id = node_files.meta_file_id
   join disks on disks.id = node_files.disk_id
+  left join tags on node_paths.move_tag_id = tags.id
 
   -- some weird error with special files
   where meta_files.size < 100000000000

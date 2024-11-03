@@ -8,10 +8,12 @@ class Scanner::PrepareFileEntities
   getter :file_entities
 
   def make_it_so
+    puts_log "start"
+
     @pre_filter.file_paths.each do |file_path|
       @file_entities << FileEntity.new(path: Path.new(file_path))
     end
 
-    puts "generated #{@file_entities.size} file entities (w/o hash)"
+    puts_log "generated #{@file_entities.size} file entities (w/o hash)"
   end
 end

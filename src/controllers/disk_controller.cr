@@ -58,6 +58,7 @@ class DiskController < ApplicationController
     params.validation do
       required :name
       required :path
+      required :description
       required :size
     end
   end
