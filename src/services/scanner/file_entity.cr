@@ -1,9 +1,10 @@
 require "digest/md5"
 
-require "./hash_cache"
-
-struct FileEntity
-  def initialize(@path : Path, @cache_unit : Scanner::FullCache::Unit? = nil)
+struct Scanner::FileEntity
+  def initialize(
+    @path : Path,
+    @cache_unit : Scanner::FullCache::Unit? = nil
+  )
     if @cache_unit
       # if @cache_unit is provided it doesn't touch disk!
 
@@ -70,15 +71,9 @@ struct FileEntity
   end
 
   def self.hash_for_path(path)
-    caches_hash = Scanner::HashCache[path]?
-    return caches_hash if caches_hash
-
     # crystal is a bit faster
     hash = hash_for_path_crystal(path)
     # hash = hash_for_path_command(path)
-
-    Scanner::HashCache[path] = hash
-
     return hash
   end
 

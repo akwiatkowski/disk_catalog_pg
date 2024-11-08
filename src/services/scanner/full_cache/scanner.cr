@@ -12,7 +12,7 @@ class Scanner::FullCache::Scanner
 
   def initialize(@disk : Disk)
     @disk_path = Path.new(disk.path.not_nil!)
-    @local_path = "/home/olek/.disk_catalog/full_cache/"
+    @local_path = "~/.disk_catalog/full_cache/"
     Dir.mkdir_p(path: @local_path)
     @cache_path = "#{@local_path}/#{disk.slug}.yml"
 
@@ -25,6 +25,8 @@ class Scanner::FullCache::Scanner
     @processed_files_count = 0
     @updated_files_count = 0
   end
+
+  getter :cache
 
   def load
     puts "load cache_path=#{@cache_path}" if DEBUG_PUTS

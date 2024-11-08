@@ -11,7 +11,7 @@ struct Scanner::FullCache::Unit
   getter :hash, :size, :cache_time, :modification_time, :mime_type, :is_directory
 
   def initialize(file_path : String)
-    file_entity = ::FileEntity.new(path: Path.new(file_path))
+    file_entity = ::Scanner::FileEntity.new(path: Path.new(file_path))
 
     @cache_time = Time.local
 
@@ -23,7 +23,7 @@ struct Scanner::FullCache::Unit
   end
 
   def update!(file_path : String)
-    file_entity = ::FileEntity.new(path: Path.new(file_path))
+    file_entity = ::Scanner::FileEntity.new(path: Path.new(file_path))
 
     @cache_time = Time.local
 
