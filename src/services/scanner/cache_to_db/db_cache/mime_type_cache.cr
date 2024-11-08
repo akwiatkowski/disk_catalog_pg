@@ -4,7 +4,7 @@ class Scanner::CacheToDb::DbCache::MimeTypeCache
   end
 
   def instance_for(mime_type_string)
-    unless @cache[mime_type_string]?
+    if @cache[mime_type_string]?.nil?
       @cache[mime_type_string] = find_or_create_for(mime_type_string).not_nil!
     end
 
