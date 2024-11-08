@@ -66,6 +66,7 @@ struct Scanner::FileEntity
     return @path.basename
   end
 
+  # TODO DRY
   def file_extension
     return @path.extension.gsub(/^\./, "").to_s.downcase
   end

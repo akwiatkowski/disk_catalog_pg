@@ -1,7 +1,7 @@
 require "./create"
 
 class Scanner::CacheToDb::Storage
-  def initialize(@disk : Disk)
+  def initialize(@disk : Disk, @db_cache : DbCache::Cache)
   end
 
   def persist(cache_unit : FullCache::Unit?, node_file : NodeFile?, file_path : String)
@@ -21,6 +21,7 @@ class Scanner::CacheToDb::Storage
       cache_unit: cache_unit,
       disk: @disk,
       file_path: file_path,
+      db_cache: @db_cache
     ).run
   end
 

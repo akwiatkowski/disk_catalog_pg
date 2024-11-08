@@ -1,7 +1,11 @@
 require "./storage"
+require "./db_cache/cache"
 
 class Scanner::CacheToDb::Processor
   def initialize(@disk : Disk)
+    @db_cache = DbCache::Cache.new(
+      disk: @disk
+    )
     @full_cache = FullCache::Scanner.new(
       disk: @disk
     )
@@ -9,7 +13,8 @@ class Scanner::CacheToDb::Processor
       disk: @disk
     )
     @storage = Scanner::CacheToDb::Storage.new(
-      disk: @disk
+      disk: @disk,
+      db_cache: @db_cache
     )
 
     @total_files_checked = 0
@@ -27,7 +32,7 @@ class Scanner::CacheToDb::Processor
       @storage.persist(
         cache_unit: cache_unit,
         node_file: node_file,
-        file_path: file_path
+        file_path: file_path,
       )
     end
   end

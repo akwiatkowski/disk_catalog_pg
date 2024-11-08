@@ -2,9 +2,13 @@ class Scanner::CacheToDb::Create
   def initialize(
     @cache_unit : FullCache::Unit,
     @disk : Disk,
-    @file_path : String
+    @file_path : String,
+    @db_cache : DbCache::Cache
   )
-    @mime_type = find_or_initialize_mime_type.as(MimeType)
+    @mime_type = @db_cache.mime_type_cache.instance_for(
+      mime_type_string: @cache_unit.mime_type
+    ).as(MimeType)
+
     @meta_file = find_or_create_meta_file.as(MetaFile)
     @node_path = find_or_create_node_path.as(NodePath)
   end
@@ -12,6 +16,7 @@ class Scanner::CacheToDb::Create
   getter :mime_type, :meta_file, :disk, :file_path
 
   def run
+    find_or_create_node_file
   end
 
   # TODO: move to module
@@ -27,28 +32,15 @@ class Scanner::CacheToDb::Create
     return @cache_unit.modification_time
   end
 
-  def mime_type_string
-    return @cache_unit.mime_type
-  end
-
   def basename
     return Path.new(@file_path).basename
   end
 
+  # def file_extension
+  #   return @file_entity.file_extension
+  # end
   def file_extension
-    return @file_entity.file_extension
-  end
-
-  def create_node_file
-    NodeFile.create(
-      meta_file: meta_file,
-      disk: disk,
-      node_path: node_path,
-
-      file_path: file_path,
-      basename: basename,
-      file_extension: file_extension
-    )
+    return Path.new(@file_path).extension.gsub(/^\./, "").to_s.downcase
   end
 
   def find_or_create_meta_file
@@ -64,6 +56,8 @@ class Scanner::CacheToDb::Create
     end
   end
 
+  # TODO: move to something like cache because most often NodePath
+  # will be already created
   def find_or_create_node_path
     disk_path = Path.new(@disk.path.not_nil!)
     relative_file_path = Path.new(@file_path.gsub(@disk.path.not_nil!, "/"))
@@ -75,6 +69,7 @@ class Scanner::CacheToDb::Create
         directory_path: directory_path,
         parent_node_path: parent_node_path
       )
+      puts parent_node_path.inspect
     end
 
     return parent_node_path.not_nil!
@@ -98,7 +93,7 @@ class Scanner::CacheToDb::Create
 
       return NodePath.create(
         disk_id: @disk.id,
-        relative_path: directory_path,
+        relative_path: directory_path.to_s,
         basename: Path.new(directory_path).basename,
         parent_node_path_id: parent_node_path_id
       )
@@ -110,6 +105,31 @@ class Scanner::CacheToDb::Create
       return MimeType.find_by(name: mime_type_string)
     else
       return MimeType.create(name: mime_type_string)
+    end
+  end
+
+  def find_or_create_node_file
+    if NodeFile.where(
+         meta_file_id: @meta_file.id.not_nil!,
+         disk_id: @disk.id.not_nil!,
+         node_path_id: @node_path.id.not_nil!,
+         file_path: @file_path.to_s
+       ).exists?
+      return NodeFile.find_by(
+        meta_file_id: @meta_file.id.not_nil!,
+        disk_id: @disk.id.not_nil!,
+        node_path_id: @node_path.id.not_nil!,
+        file_path: @file_path.to_s
+      )
+    else
+      return NodeFile.create(
+        meta_file_id: @meta_file.id.not_nil!,
+        disk_id: @disk.id.not_nil!,
+        node_path_id: @node_path.id.not_nil!,
+        file_path: @file_path.to_s,
+        basename: Path.new(@file_path.to_s).basename,
+        file_extension: file_extension
+      )
     end
   end
 end
