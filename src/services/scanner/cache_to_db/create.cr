@@ -68,51 +68,39 @@ class Scanner::CacheToDb::Create
     disk_path = Path.new(@disk.path.not_nil!)
     relative_file_path = Path.new(@file_path.gsub(@disk.path.not_nil!, "/"))
 
-    relative_file_path.each_parent do |parent_directory|
-      puts parent_directory
-      # parent_node_path_id = nil
-      # parent_node_path_id = parent_path_instance.id if parent_path_instance
-      #
-      # relative_path = "/"
-      # relative_path = parent_directory if parent_directory
-      #
-      # basename = Path.new(relative_path).basename
-      #
-      # # find if exists
-      # node_path = NodePath.find_by(
-      #   disk_id: disk.id.not_nil!,
-      #   parent_node_path_id: parent_node_path_id,
-      #   basename: basename.to_s
-      # )
-      # if node_path.nil?
-      #   # if not create
-      #   node_path = NodePath.create(
-      #     disk_id: disk.id.not_nil!,
-      #     parent_node_path_id: parent_node_path_id,
-      #     basename: basename.to_s,
-      #     relative_path: relative_path.to_s,
-      #   )
-      #
-      # parent_path_instance = create_instance(
-      #   disk: disk,
-      #   node_file: node_file,
-      #   parent_path_instance: parent_path_instance,
-      #   parent_directory: parent_directory
-      # )
+    parent_node_path = nil
+
+    relative_file_path.each_parent do |directory_path|
+      parent_node_path = find_or_create_node_path_for_parent_path(
+        directory_path: directory_path,
+        parent_node_path: parent_node_path
+      )
     end
 
-    return NodePath.new
+    return parent_node_path.not_nil!
   end
 
-  def find_or_create_node_path_for_parent_path(parent_path)
-    if NodePath.where(hash: hash, size: size).exists?
-      return MetaFile.find_by(hash: hash, size: size)
+  def find_or_create_node_path_for_parent_path(
+    directory_path : String | Path,
+    parent_node_path : NodePath?
+  )
+    if NodePath.where(
+         disk_id: @disk.id.not_nil!,
+         relative_path: directory_path.to_s
+       ).exists?
+      return NodePath.find_by(
+        disk_id: @disk.id.not_nil!,
+        relative_path: directory_path.to_s
+      )
     else
-      return MetaFile.create(
-        hash: hash,
-        size: size,
-        modification_time: modification_time,
-        mime_type: mime_type
+      parent_node_path_id = nil
+      parent_node_path_id = parent_node_path.id if parent_node_path
+
+      return NodePath.create(
+        disk_id: @disk.id,
+        relative_path: directory_path,
+        basename: Path.new(directory_path).basename,
+        parent_node_path_id: parent_node_path_id
       )
     end
   end

@@ -16,12 +16,14 @@ class Scanner::CacheToDb::Processor
   end
 
   def make_it_so
-    load_full_cache
+    cache_units = load_full_cache
     node_files = load_node_files
-    node_files.each_key do |file_path|
+
+    cache_units.each_key do |file_path|
       cache_unit = @full_cache[file_path]?
       node_file = node_files[file_path]?
 
+      puts file_path
       @storage.persist(
         cache_unit: cache_unit,
         node_file: node_file,
@@ -32,6 +34,7 @@ class Scanner::CacheToDb::Processor
 
   def load_full_cache
     @full_cache.load
+    return @full_cache.cache.files
   end
 
   def load_node_files
