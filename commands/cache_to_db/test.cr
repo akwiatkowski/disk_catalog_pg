@@ -4,7 +4,7 @@ require "../../config/application"
 require "../../src/services/scanner/main"
 
 # disable sql logs
-::Log.setup_from_env(default_level: :none)
+# ::Log.setup_from_env(default_level: :none)
 
 disk = Disk.find_by(name: "zdj test")
 

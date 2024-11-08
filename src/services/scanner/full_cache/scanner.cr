@@ -12,7 +12,7 @@ class Scanner::FullCache::Scanner
 
   def initialize(@disk : Disk)
     @disk_path = Path.new(disk.path.not_nil!)
-    @local_path = "~/.disk_catalog/full_cache/"
+    @local_path = "/home/olek/.disk_catalog/full_cache/"
     Dir.mkdir_p(path: @local_path)
     @cache_path = "#{@local_path}/#{disk.slug}.yml"
 
