@@ -5,7 +5,10 @@ class Scanner::CacheToDb::DbCache::MimeTypeCache
 
   def instance_for(mime_type_string)
     if @cache[mime_type_string]?.nil?
-      @cache[mime_type_string] = find_or_create_for(mime_type_string).not_nil!
+      instance = find_or_create_for(mime_type_string).not_nil!
+      @cache[mime_type_string] = instance
+
+      puts "MimeType #{mime_type_string} - #{instance.id}"
     end
 
     return @cache[mime_type_string]

@@ -28,7 +28,6 @@ class Scanner::CacheToDb::Processor
       cache_unit = @full_cache[file_path]?
       node_file = node_files[file_path]?
 
-      puts file_path
       @storage.persist(
         cache_unit: cache_unit,
         node_file: node_file,

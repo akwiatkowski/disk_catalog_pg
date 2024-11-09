@@ -17,7 +17,7 @@ class Scanner::CacheToDb::Create
     ).as(MetaFile)
 
     @node_path = @db_cache.node_path_cache.instance_for(
-      @file_path
+      Path.new(@file_path).parent
     ).as(NodePath)
   end
 
@@ -37,7 +37,7 @@ class Scanner::CacheToDb::Create
   def file_extension
     return Path.new(@file_path).extension.gsub(/^\./, "").to_s.downcase
   end
-  
+
   def find_or_create_node_file
     if NodeFile.where(
          meta_file_id: @meta_file.id.not_nil!,
