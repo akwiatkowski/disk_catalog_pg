@@ -84,13 +84,35 @@ struct Scanner::FileEntity
     return @path.extension.gsub(/^\./, "").to_s.downcase
   end
 
+  MIME_FOR_TAKEN_AT = ["image/jpeg", "image/x-olympus-orf", "image/tiff"]
+  EXTS_FOR_TAKEN_AT = [
+    "jpg", "jpeg", "arw", "pef", "dng", "orf", "ori",
+    "ari", "crw", "gpr", "nef", "nrw", "raf",
+  ]
+  LOCAL_LOCATION = Time::Location.load("Europe/Warsaw")
+
   def taken_at
+    # filtering by mime is not the best because a lot of file contains
+    # tiff for a thumbnail, like mp4 files
     # cat *.yml | grep mime | sort | uniq
-    if ["image/jpeg", "image/x-olympus-orf", "image/tiff"].includes?(mime_type)
-      command = "exiftool -T -DateTimeOriginal \"#{@path}\""
-      result = `#{command}` # 2019:10:12 20:00:45
-      @taken_at = Time.parse(result, "%Y:%m:%d %H:%M:%S", Time::Location::UTC)
-      puts "#{@path} - #{@taken_at}"
+    # if MIME_FOR_TAKEN_AT.includes?(mime_type)
+
+    if @taken_at.nil?
+      if EXTS_FOR_TAKEN_AT.includes?(file_extension)
+        command = "exiftool -T -DateTimeOriginal \"#{@path}\""
+        result = `#{command}` # 2019:10:12 20:00:45
+        begin
+          @taken_at = Time.parse(
+            result,
+            "%Y:%m:%d %H:%M:%S",
+            LOCAL_LOCATION
+          )
+        rescue Time::Format::Error
+          # a lot of file contain tiff like a thumbnail but we don't want
+          # puts "Time::Format::Error - #{result} @ #{@path}"
+        end
+        # puts "#{@path} - #{@taken_at}"
+      end
     end
 
     return @taken_at
