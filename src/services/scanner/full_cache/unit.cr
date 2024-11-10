@@ -7,9 +7,11 @@ struct Scanner::FullCache::Unit
   @modification_time : Time
   @mime_type : String
   @is_directory : Bool
+  @taken_at : Time?
 
-  getter :hash, :size, :cache_time, :modification_time, :mime_type, :is_directory
+  getter :hash, :size, :cache_time, :modification_time, :mime_type, :is_directory, :taken_at
 
+  # TODO: write better way of convertint Unit <-> FileEntity
   def initialize(file_path : String)
     file_entity = ::Scanner::FileEntity.new(path: Path.new(file_path))
 
@@ -20,6 +22,7 @@ struct Scanner::FullCache::Unit
     @modification_time = file_entity.modification_time
     @mime_type = file_entity.mime_type
     @is_directory = file_entity.is_directory
+    @taken_at = file_entity.taken_at
   end
 
   def update!(file_path : String)

@@ -13,8 +13,7 @@ class MetaFile < Granite::Base
   column size : Int64?
   column modification_time : Time?
 
-  # TODO: add mime, photo taken at time in external table
-  # TODO: add helper method to calculate size in human readable form
+  # TODO: add photo taken at time in external table
 
   timestamps
 

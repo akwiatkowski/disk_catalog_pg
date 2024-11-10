@@ -56,8 +56,17 @@ class Scanner::FullCache::Scanner
 
   def make_it_so
     @disk_scanner.make_it_so
+    insert_and_update
+    delete
+
+    @cache.reset_last_cache_time!
+    save
+  end
+
+  def insert_and_update
     @disk_scanner.file_paths.each do |file_path|
       if self[file_path]?.nil?
+        # file exists but it's not in full cache
         begin
           unit = Unit.new(file_path: file_path)
           @total_size += unit.size
@@ -67,8 +76,8 @@ class Scanner::FullCache::Scanner
           # TODO: add logging
         end
       else
+        # file exists and it's in full cache
         begin
-          # unit = self[file_path]?.as(Unit)
           unit = @cache.files[file_path.to_s]
           update_result = unit.update!(file_path: file_path)
           if update_result
@@ -86,9 +95,17 @@ class Scanner::FullCache::Scanner
 
       log(file_path) if should_log?
     end
+  end
 
-    @cache.reset_last_cache_time!
-    save
+  def delete
+    # if DiscScanner return > 1000 files it's quite probable this is correct
+    # effect and we can remove files which are in cache but are missing in
+    # DiscScanner output
+
+    removed_files = @cache.files.keys - @disk_scanner.file_paths
+
+    puts removed_files.inspect
+    # TODO: finish implementation
   end
 
   def should_log?
