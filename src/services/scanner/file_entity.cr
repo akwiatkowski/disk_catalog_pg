@@ -13,6 +13,7 @@ struct Scanner::FileEntity
   @hash = ""
   @mime_type = ""
   @taken_at : Time?
+  @valid = true
 
   def initialize(
     @path : Path,
@@ -49,15 +50,28 @@ struct Scanner::FileEntity
       @modification_time = info.modification_time.as(Time)
       @is_directory = info.directory?.as(Bool)
     rescue File::NotFoundError
+      @valid = false
       puts "file not found: #{@path}"
     rescue File::AccessDeniedError
+      @valid = false
       puts "file access denied: #{@path}"
     end
+  end
+
+  def valid?
+    return false if @size == 0
+    return @valid
   end
 
   getter :path, :size, :modification_time, :is_directory
 
   def hash
+    if @size == 0
+      # there is no point in calculating hash for empty files
+      # some files are processed like they would be empty but they aren't
+      @hash = "N/A"
+    end
+
     if @hash == ""
       @hash = self.class.hash_for_path(@path).as(String)
     end

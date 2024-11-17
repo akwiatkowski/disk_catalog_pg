@@ -36,7 +36,18 @@ class Scanner::FullCache::Scanner
     @was_loaded = true
   end
 
+  def remove_invalid_files
+    @cache.files.each do |file_path, file_unit|
+      unless file_unit.valid?
+        puts "remove #{file_path} because is invalid"
+        @cache.files.delete(file_path)
+      end
+    end
+  end
+
   def save
+    remove_invalid_files
+
     # just for backup
     File.rename(
       old_filename: @cache_path,
@@ -74,6 +85,9 @@ class Scanner::FullCache::Scanner
         # file exists but it's not in full cache
         begin
           unit = Unit.new(file_path: file_path)
+          # we don't need empty or very small files
+          next unless unit.valid?
+
           @total_size += unit.size
           @processed_files_count += 1
           self[file_path] = unit
