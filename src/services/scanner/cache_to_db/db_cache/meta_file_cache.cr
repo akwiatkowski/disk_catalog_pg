@@ -1,6 +1,8 @@
 class Scanner::CacheToDb::DbCache::MetaFileCache
+  CacheUnit = NamedTuple(hash: String, size: Int64, modification_time: Time)
+
   def initialize(@disk : Disk)
-    @cache = Hash(String, MimeType).new
+    @cache = Hash(CacheUnit, MimeType).new
   end
 
   def instance_for(
@@ -9,12 +11,23 @@ class Scanner::CacheToDb::DbCache::MetaFileCache
     modification_time : Time,
     mime_type : MimeType
   )
-    return find_or_create_for(
+    cache_unit = CacheUnit.new(
       hash: hash,
       size: size,
-      modification_time: modification_time,
-      mime_type: mime_type
-    ).not_nil!
+      modification_time: modification_time
+    )
+
+    if @cache[cache_unit]?.nil?
+      instance = find_or_create_for(
+        hash: hash,
+        size: size,
+        modification_time: modification_time,
+        mime_type: mime_type
+      ).not_nil!
+      @cache[cache_unit] = instance
+    end
+
+    return @cache[cache_unit]
   end
 
   def find_or_create_for(

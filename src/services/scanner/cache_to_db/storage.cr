@@ -1,4 +1,5 @@
-require "./create"
+require "./preparator"
+require "./operation/all"
 
 class Scanner::CacheToDb::Storage
   def initialize(@disk : Disk, @db_cache : DbCache::Cache)
@@ -17,23 +18,26 @@ class Scanner::CacheToDb::Storage
   end
 
   def create(cache_unit : FullCache::Unit, file_path : String)
-    Create.new(
+    preparator = Preparator.new(
       cache_unit: cache_unit,
       disk: @disk,
       file_path: file_path,
       db_cache: @db_cache
-    ).run
+    )
+    Operation::Create.new(preparator: preparator).create
   end
 
   def update(cache_unit : FullCache::Unit, node_file : NodeFile, file_path : String)
-    Create.new(
+    preparator = Preparator.new(
       cache_unit: cache_unit,
       disk: @disk,
       file_path: file_path,
       db_cache: @db_cache
-    ).run
+    )
+    Operation::Update.new(preparator: preparator, node_file: node_file).update
   end
 
   def delete(node_file : NodeFile)
+    Operation::Delete.new(node_file: node_file).delete
   end
 end

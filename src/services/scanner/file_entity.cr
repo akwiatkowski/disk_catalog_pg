@@ -110,6 +110,8 @@ struct Scanner::FileEntity
         rescue Time::Format::Error
           # a lot of file contain tiff like a thumbnail but we don't want
           # puts "Time::Format::Error - #{result} @ #{@path}"
+        rescue ArgumentError
+          # lets ignore this
         end
         # puts "#{@path} - #{@taken_at}"
       end

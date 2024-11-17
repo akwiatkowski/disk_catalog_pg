@@ -24,8 +24,12 @@ class Scanner::CacheToDb::Processor
     cache_units = load_full_cache
     node_files = load_node_files
 
-    cache_units.each_key do |file_path|
-      cache_unit = @full_cache[file_path]?
+    file_paths = (cache_units.keys + node_files.keys).uniq.sort
+
+    puts "disk #{disk.name} - total #{file_paths} file paths/keys to process"
+
+    file_paths.each_with_index do |file_path, i|
+      cache_unit = cache_units[file_path]?
       node_file = node_files[file_path]?
 
       @storage.persist(
