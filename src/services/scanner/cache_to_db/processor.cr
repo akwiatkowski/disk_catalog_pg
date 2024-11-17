@@ -26,7 +26,7 @@ class Scanner::CacheToDb::Processor
 
     file_paths = (cache_units.keys + node_files.keys).uniq.sort
 
-    puts "disk #{disk.name} - total #{file_paths} file paths/keys to process"
+    puts "disk #{@disk.name} - total #{file_paths.size} file paths/keys to process"
 
     file_paths.each_with_index do |file_path, i|
       cache_unit = cache_units[file_path]?

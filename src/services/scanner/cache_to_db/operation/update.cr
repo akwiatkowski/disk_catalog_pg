@@ -6,12 +6,17 @@ class Scanner::CacheToDb::Operation::Update
   end
 
   def update
+    dirty = false
     # the only thing possible is MetaFile update
     # path, mime, ... should never change
     # moving file will force create and delete instead of update
-    if @node_file.meta_file_id != @preparator.meta_file.id.not_nil!
-      @node_file.meta_file_id = @preparator.meta_file.id.not_nil!
-      @node_file.save!
+    if @preparator.meta_file
+      if @node_file.meta_file_id != @preparator.meta_file.id.not_nil!
+        @node_file.meta_file_id = @preparator.meta_file.id.not_nil!
+        dirty = true
+      end
     end
+
+    @node_file.save! if dirty
   end
 end

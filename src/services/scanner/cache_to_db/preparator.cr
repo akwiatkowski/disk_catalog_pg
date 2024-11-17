@@ -1,5 +1,5 @@
 # prepare required instances before create NodeFile
-class Scanner::CacheToDb::Prepare
+class Scanner::CacheToDb::Preparator
   def initialize(
     @cache_unit : FullCache::Unit,
     @disk : Disk,
@@ -22,7 +22,7 @@ class Scanner::CacheToDb::Prepare
     ).as(NodePath)
   end
 
-  getter :mime_type, :meta_file, :disk, :file_path
+  getter :mime_type, :meta_file, :disk, :file_path, :node_path
 
   def basename
     return Path.new(@file_path.to_s).basename

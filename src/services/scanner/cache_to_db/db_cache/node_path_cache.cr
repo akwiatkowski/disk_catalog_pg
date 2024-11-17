@@ -9,7 +9,7 @@ class Scanner::CacheToDb::DbCache::NodePathCache
       file_path.to_s.gsub(@disk_path_sanitized, "/").gsub(/\/{2,10}/, "/")
     )
 
-    puts "-- #{file_path.to_s} . #{@disk_path_sanitized} -> #{relative_file_path}"
+    # puts "-- #{file_path.to_s} . #{@disk_path_sanitized} -> #{relative_file_path}"
 
     if @cache[relative_file_path.to_s]?.nil?
       # create parent directories
@@ -33,7 +33,7 @@ class Scanner::CacheToDb::DbCache::NodePathCache
       @cache[relative_file_path.to_s] = node_path.not_nil!
     end
 
-    puts "++ #{@cache[relative_file_path.to_s].inspect}"
+    # puts "++ #{@cache[relative_file_path.to_s].inspect}"
     return @cache[relative_file_path.to_s]
   end
 
