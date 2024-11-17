@@ -55,6 +55,11 @@ class Scanner::FullCache::Scanner
   end
 
   def make_it_so
+    unless File.exists?(@disk_path)
+      puts "path not mounted"
+      return
+    end
+
     @disk_scanner.make_it_so
     insert_and_update
     delete

@@ -1,5 +1,5 @@
 class Scanner::CacheToDb::DbCache::MetaFileCache
-  alias CacheUnit = NamedTuple(hash: String, size: Int64, modification_time: Time)
+  alias CacheUnit = NamedTuple(hash: String, size: Int64)
 
   def initialize(@disk : Disk)
     @cache = Hash(CacheUnit, MetaFile).new
@@ -13,8 +13,7 @@ class Scanner::CacheToDb::DbCache::MetaFileCache
   )
     cache_unit = CacheUnit.new(
       hash: hash,
-      size: size,
-      modification_time: modification_time
+      size: size
     )
 
     if @cache[cache_unit]?.nil?
