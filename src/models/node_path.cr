@@ -7,7 +7,7 @@ class NodePath < Granite::Base
   belongs_to :tag, optional: true
   belongs_to :move_tag, class_name: Tag, optional: true
 
-  has_many :node_files
+  has_many :node_files, class_name: NodeFile
   has_many :children_node_paths, class_name: NodePath, foreign_key: :parent_node_path_id
 
   column id : Int64, primary: true
