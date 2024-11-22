@@ -1,5 +1,6 @@
 require "./container"
-require "./unit"
+require "./unit/factories/from_file"
+require "./unit/factories/update"
 
 # similar to HashCache but it perform all operation and store
 # hash locally. So you can run disk related operation w/o having
@@ -114,7 +115,9 @@ class Scanner::FullCache::Scanner
       if self[file_path]?.nil?
         # file exists but it's not in full cache
         begin
-          unit = Unit.new(file_path: file_path)
+          unit = Unit::Factories::FromFile.new(
+            path: file_path
+          ).call
           # we don't need empty or very small files
           next unless unit.valid?
 
@@ -129,8 +132,13 @@ class Scanner::FullCache::Scanner
         # file exists and it's in full cache
         begin
           unit = @cache.files[file_path.to_s]
-          update_result = unit.update!(file_path: file_path)
-          if update_result
+          update_service = Unit::Factories::Update.new(
+            unit: unit,
+            path: file_path
+          )
+          new_unit = update_service.call
+          if update_service.update_result
+            unit = new_unit
             # only change cache if there was change
             # to not overwrite cache too often
             self[file_path.to_s] = unit

@@ -1,11 +1,11 @@
-require "./unit"
+require "./unit/entity"
 
 struct Scanner::FullCache::Container
   include YAML::Serializable
 
   @name : String
   @path : String
-  @files : Hash(String, Unit)
+  @files : Hash(String, Unit::Entity)
   @last_cache_time : Time
   @total_disk_size : Int64?
   @avail_disk_size : Int64?
@@ -18,7 +18,7 @@ struct Scanner::FullCache::Container
     @last_cache_time = Time.local
     @total_disk_size = 0
     @avail_disk_size = 0
-    @files = Hash(String, Unit).new
+    @files = Hash(String, Unit::Entity).new
 
     if File.exists?(@path)
       begin
