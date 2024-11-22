@@ -33,9 +33,17 @@ struct Scanner::FullCache::Unit
     @taken_at_missing = file_entity.taken_at_missing
   end
 
+  # TODO: create service converting Unit <-> FileEntity
+  # TODO: create service getting information about basic parameters (like a factory)
+  # NOTE: time cost because of checking file size if file was not updated
+  # maybe it would be possible to do a first run to ignore (only insert) and
+  # second run when everything was added to ensure data is correct (only update)
+  # third to remove missing files
   def update!(file_path : String)
     update_result = false
-    file_entity = ::Scanner::FileEntity.new(path: Path.new(file_path))
+    file_entity = ::Scanner::FileEntity.new(
+      path: Path.new(file_path)
+    )
 
     @cache_time = Time.local
 
