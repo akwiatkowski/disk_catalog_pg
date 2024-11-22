@@ -5,10 +5,11 @@ require "./unit"
 # hash locally. So you can run disk related operation w/o having
 # disk connected. WIP
 class Scanner::FullCache::Scanner
-  FORCE_SAVE_AFTER        =  400
-  LOG_EVERY_WHEN_NEW_FILE =   20
-  LOG_EVERY_EVERY_FILE    = 1000
-  DEBUG_PUTS              = false
+  # TODO: convert from number of files to total size of files
+  # because sometime there are big files (movies) or very small images or text
+  FORCE_SAVE_AFTER_SIZE   = 2_000_000_000
+  LOG_EVERY_WHEN_NEW_FILE =            50
+  LOG_EVERY_EVERY_FILE    =          1000
 
   def initialize(@disk : Disk)
     @disk_path = Path.new(disk.path.not_nil!)
@@ -16,12 +17,18 @@ class Scanner::FullCache::Scanner
     Dir.mkdir_p(path: @local_path)
     @cache_path = "#{@local_path}/#{disk.slug}.yml"
 
+    # for debug purpose it save scanned paths into temp cache
+    # to be able to skip disk scan
+    @scanned_cache_path = "#{@local_path}/#{disk.slug}.scan.yml"
+    @file_paths = Array(String).new
+
     @disk_scanner = ::Scanner::DiskScanner.new(path: @disk_path)
     @cache = Container.new(@disk)
 
     @was_loaded = false
     @new_files_count = 0
     @total_size = 0.to_i64
+    @processed_file_size = 0.to_i64
     @processed_files_count = 0
     @updated_files_count = 0
   end
@@ -29,11 +36,34 @@ class Scanner::FullCache::Scanner
   getter :cache
 
   def load
-    puts "load cache_path=#{@cache_path}" if DEBUG_PUTS
     if File.exists?(@cache_path)
       @cache = Container.from_yaml(File.open(@cache_path))
     end
     @was_loaded = true
+  end
+
+  def scan_disk_or_load_cache
+    if File.exists?(@scanned_cache_path)
+      puts "loading scan disk cache"
+      @file_paths = Array(String).from_yaml(File.open(@scanned_cache_path))
+      puts "load finished"
+    else
+      @disk_scanner.make_it_so
+      @file_paths = @disk_scanner.file_paths
+
+      puts "saving scan disk cache"
+      save_disk_scan
+      puts "save finished"
+    end
+
+    return @file_paths
+  end
+
+  def save_disk_scan
+    File.open(@scanned_cache_path, "w") do |f|
+      @file_paths.to_yaml(f)
+    end
+    puts "scanned disk cache save completed"
   end
 
   def remove_invalid_files
@@ -71,7 +101,7 @@ class Scanner::FullCache::Scanner
       return
     end
 
-    @disk_scanner.make_it_so
+    scan_disk_or_load_cache
     insert_and_update
     delete
 
@@ -80,7 +110,7 @@ class Scanner::FullCache::Scanner
   end
 
   def insert_and_update
-    @disk_scanner.file_paths.each do |file_path|
+    @file_paths.sort.each do |file_path|
       if self[file_path]?.nil?
         # file exists but it's not in full cache
         begin
@@ -90,6 +120,7 @@ class Scanner::FullCache::Scanner
 
           @total_size += unit.size
           @processed_files_count += 1
+          @processed_file_size += unit.size
           self[file_path] = unit
         rescue File::NotFoundError
           # TODO: add logging
@@ -102,8 +133,9 @@ class Scanner::FullCache::Scanner
           if update_result
             # only change cache if there was change
             # to not overwrite cache too often
-            self[file_path] = unit
+            self[file_path.to_s] = unit
             @updated_files_count += 1
+            @processed_file_size += unit.size
           end
           @total_size += unit.size
           @processed_files_count += 1
@@ -121,9 +153,10 @@ class Scanner::FullCache::Scanner
     # effect and we can remove files which are in cache but are missing in
     # DiscScanner output
 
-    removed_files = @cache.files.keys - @disk_scanner.file_paths
+    removed_files = @cache.files.keys - @file_paths
 
-    puts removed_files.inspect
+    puts "removed files #{removed_files.size}"
+    # puts removed_files.inspect
     # TODO: finish implementation
   end
 
@@ -133,15 +166,24 @@ class Scanner::FullCache::Scanner
   end
 
   def should_save?
-    return @new_files_count > FORCE_SAVE_AFTER
+    return @processed_file_size > FORCE_SAVE_AFTER_SIZE
   end
 
-  def files_to_force_save
-    FORCE_SAVE_AFTER - @new_files_count
+  def files_size_to_force_save
+    FORCE_SAVE_AFTER_SIZE - @processed_file_size
   end
 
   def log(file_path)
-    puts "#{file_path}: new_files=#{@new_files_count}, all_files=#{@processed_files_count}, files_to_force_save=#{files_to_force_save}, cached=#{@cache.files.keys.size}, total_size=#{SizeTools.to_human(@total_size)}, updated=#{@updated_files_count}"
+    puts "#{file_path}:"
+    puts "- processed_file_size=#{SizeTools.to_human(@processed_file_size)}"
+    puts "- files_size_to_force_save=#{SizeTools.to_human(files_size_to_force_save)}"
+    puts "- total_size=#{SizeTools.to_human(@total_size)}"
+
+    puts "- new_files=#{@new_files_count}"
+    puts "- updated=#{@updated_files_count}"
+
+    puts "- all_files=#{@processed_files_count}"
+    puts "- cached=#{@cache.files.keys.size}"
   end
 
   def []?(file_path)
@@ -154,6 +196,7 @@ class Scanner::FullCache::Scanner
     if should_save?
       save
       @new_files_count = 0
+      @processed_file_size = 0.to_i64
     end
 
     @cache.files[file_path.to_s] = cache_unit

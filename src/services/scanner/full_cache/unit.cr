@@ -10,8 +10,11 @@ struct Scanner::FullCache::Unit
   @mime_type : String
   @is_directory : Bool
   @taken_at : Time?
+  # when file was processed and we don't want to process again
+  @taken_at_missing : Bool?
 
-  getter :hash, :size, :cache_time, :modification_time, :mime_type, :is_directory, :taken_at
+  getter :hash, :size, :cache_time, :modification_time, :mime_type,
+    :is_directory, :taken_at, :taken_at_missing
 
   # TODO: write better way of convertint Unit <-> FileEntity
   def initialize(file_path : String)
@@ -25,9 +28,13 @@ struct Scanner::FullCache::Unit
     @mime_type = file_entity.mime_type
     @is_directory = file_entity.is_directory
     @taken_at = file_entity.taken_at
+    # TODO: taken_at_missing is not working right now
+    # test it on small directory
+    @taken_at_missing = file_entity.taken_at_missing
   end
 
   def update!(file_path : String)
+    update_result = false
     file_entity = ::Scanner::FileEntity.new(path: Path.new(file_path))
 
     @cache_time = Time.local
@@ -48,18 +55,28 @@ struct Scanner::FullCache::Unit
       @modification_time = new_modification_time
       # original photo taken at should not be modified
       # @taken_at = new_taken_at
-      return true
+      update_result = true
     end
 
-    # fill `taken_at`
-    # temporary added logic to overwrite UTC times to local
-    if (@taken_at.nil? || @taken_at.not_nil!.utc?) && !file_entity.taken_at.nil?
-      puts "file #{file_path} taken_at was missing, updating to #{file_entity.taken_at}"
-      @taken_at = file_entity.taken_at
-      return true
+    # fill `taken_at_missing`
+    if @taken_at_missing.nil? && !file_entity.taken_at_missing.nil?
+      puts "file #{file_path} taken_at not possible to get, marking as missing"
+      @taken_at_missing = true
+      update_result = true
     end
 
-    return false
+    # if we now taken_at is missing there is no point at checking again taken_at
+    unless @taken_at_missing
+      # fill `taken_at`
+      # temporary added logic to overwrite UTC times to local
+      if (@taken_at.nil? || @taken_at.not_nil!.utc?) && !file_entity.taken_at.nil?
+        puts "file #{file_path} taken_at was missing, updating to #{file_entity.taken_at}"
+        @taken_at = file_entity.taken_at.not_nil!
+        update_result = true
+      end
+    end
+
+    return update_result
   end
 
   def valid?

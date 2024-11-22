@@ -13,6 +13,7 @@ struct Scanner::FileEntity
   @hash = ""
   @mime_type = ""
   @taken_at : Time?
+  @taken_at_missing : Bool?
   @valid = true
 
   def initialize(
@@ -36,6 +37,7 @@ struct Scanner::FileEntity
     @hash = cache_unit.hash
     @mime_type = cache_unit.mime_type
     @taken_at = cache_unit.taken_at
+    @taken_at_missing = cache_unit.taken_at_missing
   end
 
   private def initialize_from_real_file
@@ -63,7 +65,7 @@ struct Scanner::FileEntity
     return @valid
   end
 
-  getter :path, :size, :modification_time, :is_directory
+  getter :path, :size, :modification_time, :is_directory, :taken_at_missing
 
   def hash
     if @size == 0
@@ -111,7 +113,17 @@ struct Scanner::FileEntity
     # cat *.yml | grep mime | sort | uniq
     # if MIME_FOR_TAKEN_AT.includes?(mime_type)
 
+    # there are a lot of jpegs which don't have that attribute
+    # and we cannot try to refresh it every time we iterate
+    if @taken_at_missing
+      puts "#{@path} was already marked as missing taken_at"
+      return nil
+    end
+
     if @taken_at.nil?
+      # if something goes wrong let's mark it as missing
+      @taken_at_missing = true
+
       if EXTS_FOR_TAKEN_AT.includes?(file_extension)
         command = "exiftool -T -DateTimeOriginal \"#{@path}\""
         result = `#{command}` # 2019:10:12 20:00:45
@@ -121,6 +133,7 @@ struct Scanner::FileEntity
             "%Y:%m:%d %H:%M:%S",
             LOCAL_LOCATION
           )
+          @taken_at_missing = nil
         rescue Time::Format::Error
           # a lot of file contain tiff like a thumbnail but we don't want
           # puts "Time::Format::Error - #{result} @ #{@path}"

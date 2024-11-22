@@ -9,6 +9,6 @@ require "../../src/services/scanner/main"
 disk = Disk.find_by(name: "disk J")
 
 service = Scanner::FullCache::Scanner.new(
-  disk: disk.not_nil!
+  disk: disk.not_nil!,
 )
 service.make_it_so

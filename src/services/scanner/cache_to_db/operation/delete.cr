@@ -5,7 +5,8 @@ class Scanner::CacheToDb::Operation::Delete
   end
 
   def delete
-    puts "DELETE #{@node_file} not implemented yet"
+    puts "DELETE #{@node_file.id}: #{@node_file.file_path}"
+    @node_file.destroy
     return @node_file
   end
 end
