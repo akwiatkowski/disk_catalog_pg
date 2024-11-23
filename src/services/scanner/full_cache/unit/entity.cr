@@ -2,8 +2,6 @@
 struct Scanner::FullCache::Unit::Entity
   include YAML::Serializable
 
-  SMALLEST_IMPORTANT_FILE = 512
-
   @hash : String
   @size : Int64
   @cache_time : Time
@@ -27,10 +25,5 @@ struct Scanner::FullCache::Unit::Entity
     @taken_at,
     @taken_at_missing
   )
-  end
-
-  def valid?
-    return false if @size < SMALLEST_IMPORTANT_FILE
-    return true
   end
 end

@@ -110,7 +110,7 @@ struct Scanner::FullCache::RealFile::Entity
     if @taken_at.nil?
       ta = Processors::TakenAtProcessor.taken_at_for_path(@path)
       if ta.nil?
-        puts "#{@path} - taken_at missing"
+        # puts "#{@path} - taken_at missing"
         @taken_at_missing = true
         @taken_at = nil
       else
