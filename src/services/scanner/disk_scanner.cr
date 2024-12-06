@@ -16,7 +16,12 @@ class Scanner::DiskScanner
     puts_log "found #{found.size}"
 
     @file_paths = found.select do |found_path|
-      File.directory?(found_path) == false
+      begin
+        File.directory?(found_path) == false
+      rescue File::AccessDeniedError
+        # lets ignore files assigned to somekind of root user
+        false
+      end
     end
 
     puts_log "selected #{@file_paths.size} files"

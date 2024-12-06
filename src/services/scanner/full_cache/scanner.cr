@@ -8,11 +8,10 @@ require "./unit/factories/update"
 # disk connected. WIP
 class Scanner::FullCache::Scanner
   # save is forced after processing size and number of files
-  FORCE_SAVE_AFTER_SIZE  = 2_000_000_000
-  FORCE_SAVE_AFTER_COUNT =         1_000
+  FORCE_SAVE_AFTER_SIZE  = 10_000_000_000
+  FORCE_SAVE_AFTER_COUNT =          4_000
 
-  LOG_EVERY_WHEN_NEW_FILE =   50
-  LOG_EVERY_EVERY_FILE    = 1000
+  LOG_EVERY_SECONDS = 20
 
   # TODO: add flag to ignore existing files. This will be new feature
   def initialize(@disk : Disk, @disable_update = true)
@@ -36,8 +35,6 @@ class Scanner::FullCache::Scanner
     # so if there won't be exception it will increment
     # success mean update attempt but nothing changed
     @processed_succes_files_count = 0
-    # as above but it's being reset for logging
-    @processed_succes_files_count_for_logging = 0
     # only new files appended to cache
     @processed_new_files_count = 0
     # like above but only succesfull updates (no exception, important change)
@@ -47,8 +44,8 @@ class Scanner::FullCache::Scanner
     @processed_file_count_for_saving = 0
     # all processed files even the one which not lead to update
     @scanned_file_count = 0
-    # as above but only for logging, is being reset
-    @scanned_file_count_for_logging = 0
+    # file which exists and should be identical, skipping
+    @unmodified_file_count = 0
 
     # added and updated (with something changed) file size
     @processed_file_size = 0.to_i64
@@ -57,55 +54,79 @@ class Scanner::FullCache::Scanner
     # size of all files being process even if it's not being updated
     # because it's already on list
     @scanned_file_size = 0.to_i64
+    # size of all files which are already in cache which is loaded
+    @loaded_file_size = 0.to_i64
+    # file which exists and should be identical, skipping
+    @unmodified_file_size = 0.to_i64
+    # diff between disk size and available free space
+    # not available on every scanned disk
+    @files_on_disk_size = 0.to_i64
+    # calculated using size of all unit from cache and then
+    # incremented when adding new file
+    @cached_size = 0.to_i64
 
     # count of files which is on disk (or in disk semi cache)
     @file_paths_from_disk_count = 0
+    # increment every iteration
+    # there should be similar variable but this one should works
+    # better because it's not impacted by logic and exceptions
+    @file_paths_iteration = 0
+
+    @last_log_time = Time.local
   end
 
   getter :cache
 
+  def time_string
+    return Time.local.to_s("%y-%m-%d %H:%M:%S.%3N")
+  end
+
   def load
     if File.exists?(@cache_path)
       @cache = Container.from_yaml(File.open(@cache_path))
+      @loaded_file_size = @cache.total_file_size
     end
     @was_loaded = true
   end
 
   def scan_disk_or_load_cache
     if File.exists?(@scanned_cache_path)
-      puts "loading scan disk cache"
+      puts "#{time_string} loading scan disk cache"
       @file_paths = Array(String).from_yaml(File.open(@scanned_cache_path))
-      puts "load finished"
+      puts "#{time_string} load finished"
     else
       @disk_scanner.make_it_so
       @file_paths = @disk_scanner.file_paths
 
-      puts "saving scan disk cache"
+      puts "#{time_string} saving scan disk cache"
       save_disk_scan
-      puts "save finished"
+      puts "#{time_string} save finished"
     end
 
     return @file_paths
+  end
+
+  def get_disk_size
+    @cache.get_disk_sizes
+    if @cache.total_disk_size && @cache.avail_disk_size
+      @files_on_disk_size = @cache.total_disk_size.not_nil! - @cache.avail_disk_size.not_nil!
+    end
+
+    @cache.files.values.each do |unit|
+      @cached_size += unit.size
+    end
   end
 
   def save_disk_scan
     File.open(@scanned_cache_path, "w") do |f|
       @file_paths.to_yaml(f)
     end
-    puts "scanned disk cache save completed"
-  end
-
-  def remove_invalid_files
-    @cache.files.each do |file_path, file_unit|
-      unless file_unit.valid?
-        puts "remove #{file_path} because is invalid"
-        @cache.files.delete(file_path)
-      end
-    end
+    puts "#{time_string} scanned disk cache save completed"
   end
 
   def save
-    remove_invalid_files
+    # cache should hold all files. It will be filtered later
+    # before saving them to DB
 
     # just for backup
     File.rename(
@@ -113,11 +134,11 @@ class Scanner::FullCache::Scanner
       new_filename: "#{@cache_path}.bak"
     ) if File.exists?(@cache_path)
 
-    puts "save cache_path=#{@cache_path}"
+    puts "#{time_string} save cache_path=#{@cache_path}"
     File.open(@cache_path, "w") do |f|
       @cache.to_yaml(f)
     end
-    puts "save completed"
+    puts "#{time_string} save completed"
   end
 
   def reset
@@ -126,10 +147,11 @@ class Scanner::FullCache::Scanner
 
   def make_it_so
     unless File.exists?(@disk_path)
-      puts "path not mounted"
+      puts "#{time_string} path not mounted"
       return
     end
 
+    get_disk_size
     scan_disk_or_load_cache
     insert_and_update
     delete
@@ -141,6 +163,8 @@ class Scanner::FullCache::Scanner
   def insert_and_update
     @file_paths_from_disk_count = @file_paths.size
     @file_paths.sort.each do |file_path|
+      @file_paths_iteration += 1
+
       t = Time.local
       process_file_path(file_path)
       @stats.append(path: file_path, time_span: Time.local - t)
@@ -152,29 +176,31 @@ class Scanner::FullCache::Scanner
   def process_file_path(file_path)
     if self[file_path]?.nil?
       # file exists but it's not in full cache
+      # NEW
       begin
         unit = Unit::Factories::FromFile.new(
           path: file_path
         ).call
 
         @scanned_file_size += unit.size
-
         @scanned_file_count += 1
-        @scanned_file_count_for_logging += 1
 
         @processed_succes_files_count += 1
-        @processed_succes_files_count_for_logging += 1
         @processed_new_files_count += 1
         @processed_file_count_for_saving += 1
         @processed_file_size += unit.size
         @processed_file_size_for_saving += unit.size
+        @cached_size += unit.size
 
         self[file_path] = unit
       rescue File::NotFoundError
         # TODO: add logging
+      rescue File::AccessDeniedError
+        # TODO: add logging
       end
     else
       # file exists and it's in full cache
+      # UPDATE
       begin
         unit = @cache.files[file_path.to_s]
 
@@ -191,18 +217,21 @@ class Scanner::FullCache::Scanner
             self[file_path.to_s] = unit
 
             @processed_succes_files_count += 1
-            @processed_succes_files_count_for_logging += 1
             @processed_updated_files_count += 1
             @processed_file_count_for_saving += 1
             @processed_file_size += unit.size
             @processed_file_size_for_saving += unit.size
+          else
+            @unmodified_file_count += 1
+            @unmodified_file_size += unit.size
           end
         end
 
         @scanned_file_size += unit.size
         @scanned_file_count += 1
-        @scanned_file_count_for_logging += 1
       rescue File::NotFoundError
+        # TODO: add logging
+      rescue File::AccessDeniedError
         # TODO: add logging
       end
     end
@@ -215,12 +244,12 @@ class Scanner::FullCache::Scanner
 
     removed_files = @cache.files.keys - @file_paths
 
-    puts "removed files #{removed_files.size}"
+    puts "#{time_string} removed files #{removed_files.size}"
     # puts removed_files.inspect
     # TODO: finish implementation
   end
 
-  def should_save?
+  def should_save_and_log?
     if (@processed_file_size_for_saving > FORCE_SAVE_AFTER_SIZE) ||
        (@processed_file_count_for_saving > FORCE_SAVE_AFTER_COUNT)
       @processed_file_size_for_saving = 0.to_i64
@@ -228,6 +257,189 @@ class Scanner::FullCache::Scanner
       return true
     end
     return false
+  end
+
+  def should_log?
+    return (Time.local - @last_log_time).seconds >= LOG_EVERY_SECONDS
+  end
+
+  def log(file_path)
+    return unless should_log?
+    @last_log_time = Time.local
+
+    log_string = String.build do |s|
+      s << "#{time_string} #{file_path}:\n"
+
+      # new, most important
+      # 1. percentage count - how much we processed path from scanned from disk
+      file_path_from_disk_count = [@file_paths_from_disk_count, 1].max
+      percentage = ((@file_paths_iteration.to_f / file_path_from_disk_count.to_f) * 100.0).round / 10.0
+
+      string = "count %".rjust(LOGGING_KEY_LENGTH) + ": " + "#{percentage}%".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      string = "scanned".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@file_paths_from_disk_count}".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      string = "in cache".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@cache.files.keys.size}".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      string = "iteration".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@file_paths_iteration}".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      s << "\n"
+
+      # 2. percentage size - how much we processed in size not file count
+      # drawback here is that we don't know
+
+      # 2a. size of files on disk using total disk size - available
+      if @files_on_disk_size > 0
+        percentage = ((@scanned_file_size.to_f / @files_on_disk_size.to_f) * 100.0).round / 10.0
+
+        string = "size on disk %".rjust(LOGGING_KEY_LENGTH) + ": " + "#{percentage}%".ljust(LOGGING_VALUE_LENGTH)
+        s << string
+
+        string = "scanned".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@scanned_file_size)}".ljust(LOGGING_VALUE_LENGTH)
+        s << string
+
+        string = "files on disk".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@files_on_disk_size)}".ljust(LOGGING_VALUE_LENGTH)
+        s << string
+
+        s << "\n"
+      end
+
+      # 2b. size of files alreacy scanned
+      if @cached_size > 0
+        percentage = ((@scanned_file_size.to_f / @cached_size.to_f) * 100.0).round / 10.0
+
+        string = "size by cached %".rjust(LOGGING_KEY_LENGTH) + ": " + "#{percentage}%".ljust(LOGGING_VALUE_LENGTH)
+        s << string
+
+        string = "scanned".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@scanned_file_size)}".ljust(LOGGING_VALUE_LENGTH)
+        s << string
+
+        string = "cached size".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@cached_size)}".ljust(LOGGING_VALUE_LENGTH)
+        s << string
+
+        s << "\n"
+      end
+
+      # 3. how many new, updated or identical
+      string = "new".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_new_files_count}".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      string = "updated".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_updated_files_count}".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      string = "unmodified".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@unmodified_file_count}".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      string = "unmod.size".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@unmodified_file_size)}".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      s << "\n"
+
+      # 4
+      string = "scanned".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@scanned_file_size)}".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      string = "loaded".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@loaded_file_size)}".ljust(LOGGING_VALUE_LENGTH)
+      s << string
+
+      if @cache.total_disk_size
+        string = "total disk".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@cache.total_disk_size.not_nil!)}".ljust(LOGGING_VALUE_LENGTH)
+        s << string
+      end
+
+      if @cache.avail_disk_size
+        string = "free avail".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@cache.avail_disk_size.not_nil!)}".ljust(LOGGING_VALUE_LENGTH)
+        s << string
+      end
+
+      if @cache.total_disk_size && @cache.avail_disk_size
+        taken_size_on_disk = @cache.total_disk_size.not_nil! - @cache.avail_disk_size.not_nil!
+        to_scan_size = taken_size_on_disk - @scanned_file_size
+
+        string = "to scan".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(to_scan_size)}".ljust(LOGGING_VALUE_LENGTH)
+        s << string
+      end
+
+      s << "\n"
+
+      # file_path_from_disk_count = [@file_paths_from_disk_count, 1].max
+      # percentage ((@scanned_file_size.to_f / file_path_from_disk_count.to_f) * 100.0).round / 10.0
+      # # 2. size of iterated files - how much of disk we processed
+      #
+      #
+      # # old, detailed
+      # iterated_percent = ((@processed_succes_files_count.to_f / (@file_paths_from_disk_count + 1).to_f) * 100.0).round / 10.0
+      # string = "(iter.) percent".rjust(LOGGING_KEY_LENGTH) + ": " + "#{iterated_percent}%".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "count".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_succes_files_count}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "processed".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@file_paths_from_disk_count}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "in cache".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@cache.files.keys.size}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # s << "\n"
+      #
+      # string = "new".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_new_files_count}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "updated".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_updated_files_count}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "unmodified".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@unmodified_file_count}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "unmod.size".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@unmodified_file_size)}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # s << "\n"
+      #
+      # string = "in iteration".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_file_count_for_saving}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "to save".rjust(LOGGING_KEY_LENGTH) + ": " + "#{files_count_to_force_save}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "size".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@processed_file_size_for_saving)}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "to save".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(files_size_to_force_save)}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # s << "\n"
+      #
+      # string = "scanned".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@scanned_file_size)}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # string = "loaded".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@loaded_file_size)}".ljust(LOGGING_VALUE_LENGTH)
+      # s << string
+      #
+      # if @cache.total_disk_size
+      #   string = "total disk".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@cache.total_disk_size.not_nil!)}".ljust(LOGGING_VALUE_LENGTH)
+      #   s << string
+      # end
+      #
+      # if @cache.avail_disk_size
+      #   string = "free avail".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@cache.avail_disk_size.not_nil!)}".ljust(LOGGING_VALUE_LENGTH)
+      #   s << string
+      # end
+      #
+      # if @cache.total_disk_size && @cache.avail_disk_size
+      #   taken_size_on_disk = @cache.total_disk_size.not_nil! - @cache.avail_disk_size.not_nil!
+      #   to_scan_size = taken_size_on_disk - @scanned_file_size
+      #
+      #   string = "to scan".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(to_scan_size)}".ljust(LOGGING_VALUE_LENGTH)
+      #   s << string
+      # end
+    end
+    puts log_string
   end
 
   def files_size_to_force_save
@@ -241,79 +453,17 @@ class Scanner::FullCache::Scanner
   LOGGING_KEY_LENGTH   = 15
   LOGGING_VALUE_LENGTH = 12
 
-  def log(file_path)
-    should_log = false
-    if @processed_succes_files_count_for_logging >= LOG_EVERY_WHEN_NEW_FILE
-      puts "logging because of new/updated files: #{@processed_succes_files_count}/#{@processed_succes_files_count_for_logging}"
-      should_log = true
-      @processed_succes_files_count_for_logging = 0
-    end
-
-    if @scanned_file_count_for_logging >= LOG_EVERY_EVERY_FILE
-      puts "logging because of total files scanned: #{@scanned_file_count}/#{@scanned_file_count_for_logging}"
-      should_log = true
-      @scanned_file_count_for_logging = 0
-    end
-
-    return unless should_log
-
-    log_string = String.build do |s|
-      s << "** #{file_path}:"
-      s << "iterated\n"
-
-      iterated_percent = ((@processed_succes_files_count.to_f / (@file_paths_from_disk_count + 1).to_f) * 100.0).round / 10.0
-      string = "percent".rjust(LOGGING_KEY_LENGTH) + ": " + "#{iterated_percent}%".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      string = "count".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_succes_files_count}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      string = "processed".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@file_paths_from_disk_count}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      string = "in cache".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@cache.files.keys.size}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      s << "\n"
-
-      string = "new".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_new_files_count}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      string = "updated".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_updated_files_count}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      s << "\n"
-
-      string = "in iteration".rjust(LOGGING_KEY_LENGTH) + ": " + "#{@processed_file_count_for_saving}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      string = "to save".rjust(LOGGING_KEY_LENGTH) + ": " + "#{files_count_to_force_save}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      string = "size".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@processed_file_size_for_saving)}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      string = "to save".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(files_size_to_force_save)}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-
-      s << "\n"
-
-      string = "scanned".rjust(LOGGING_KEY_LENGTH) + ": " + "#{SizeTools.to_human(@scanned_file_size)}".ljust(LOGGING_VALUE_LENGTH)
-      s << string
-    end
-
-    puts log_string
-  end
-
   def []?(file_path)
     load unless @was_loaded
     return @cache.files[file_path.to_s]?
   end
 
   def []=(file_path, cache_unit)
-    if should_save?
+    if should_save_and_log?
+      log(file_path)
       save
-      @stats.print
+      # this one is not that usefule that I thought
+      # @stats.print
     end
 
     @cache.files[file_path.to_s] = cache_unit

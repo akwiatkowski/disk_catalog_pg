@@ -10,7 +10,7 @@ struct Scanner::FullCache::Container
   @total_disk_size : Int64?
   @avail_disk_size : Int64?
 
-  getter :files
+  getter :files, :total_disk_size, :avail_disk_size
 
   def initialize(disk)
     @name = disk.name.not_nil!
@@ -22,8 +22,8 @@ struct Scanner::FullCache::Container
 
     if File.exists?(@path)
       begin
-        @total_disk_size = disk_size_for_disk(disk)
-        @avail_disk_size = disk_free_size_for_disk(disk)
+        @total_disk_size = disk_size_for_disk(disk.path)
+        @avail_disk_size = disk_free_size_for_disk(disk.path)
       rescue IndexError
         puts "problem with getting disk size"
       end
@@ -35,19 +35,34 @@ struct Scanner::FullCache::Container
     @last_cache_time = Time.local
   end
 
-  def disk_size_for_disk(disk)
-    command = "df --output=size -BM \"#{disk.path}\""
+  def get_disk_sizes
+    if File.exists?(@path)
+      @total_disk_size ||= disk_size_for_disk(@path)
+      @avail_disk_size ||= disk_free_size_for_disk(@path)
+    end
+  end
+
+  def disk_size_for_disk(disk_path)
+    command = "df --output=size -BM \"#{disk_path}\""
     result = `#{command}`
     result_mb_string = result.scan(/(\d+)M/)
     result_mb = result_mb_string[1][1].to_s.to_i64 * 1024 * 1024
     return result_mb
   end
 
-  def disk_free_size_for_disk(disk)
-    command = "df --output=avail -BM \"#{disk.path}\""
+  def disk_free_size_for_disk(disk_path)
+    command = "df --output=avail -BM \"#{disk_path}\""
     result = `#{command}`
     result_mb_string = result.scan(/(\d+)M/)
     result_mb = result_mb_string[0][1].to_s.to_i64 * 1024 * 1024
     return result_mb
+  end
+
+  def total_file_size
+    size = 0.to_i64
+    @files.values.each do |unit|
+      size += unit.size
+    end
+    return size
   end
 end
