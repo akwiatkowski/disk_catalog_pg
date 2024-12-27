@@ -1,4 +1,4 @@
-require "../services/size_tools"
+require "../services/tools/size_tools"
 
 class MetaFile < Granite::Base
   connection pg

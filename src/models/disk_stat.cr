@@ -1,5 +1,3 @@
-require "../services/size_tools"
-
 class DiskStat < Granite::Base
   connection pg
   table disk_stats
