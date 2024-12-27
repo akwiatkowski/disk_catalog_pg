@@ -52,23 +52,14 @@ class Scanner::FullCache::Unit::Factories::Update
     end
 
     # fill `taken_at_missing`
-    if @unit.taken_at_missing.nil? && !@file_entity.taken_at_missing.nil?
-      puts "file #{@path} taken_at not possible to get, marking as missing"
+    if @file_entity.refresh_taken_at_needed?
+      puts "file #{@path} updating taken_at stuff"
 
-      mark_update_result!
-
+      @file_entity.refresh_taken_at_if_needed
       new_taken_at_missing = @file_entity.taken_at_missing
       new_taken_at = @file_entity.taken_at
-    end
-
-    # fill `taken_at`
-    if !new_taken_at_missing && new_taken_at.nil?
-      puts "file #{@path} taken_at was missing, updating to #{@file_entity.taken_at}"
 
       mark_update_result!
-
-      new_taken_at = @file_entity.taken_at
-      new_taken_at_missing = @file_entity.taken_at_missing
     end
 
     instance = Entity.new(

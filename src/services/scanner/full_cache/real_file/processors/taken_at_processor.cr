@@ -6,9 +6,13 @@ class Scanner::FullCache::RealFile::Processors::TakenAtProcessor
     "ari", "crw", "gpr", "nef", "nrw", "raf",
   ]
 
-  def self.taken_at_for_path(path, location = LOCAL_LOCATION)
+  def self.valid_extension_for_taken_at?(path)
     extension = Processors::ExtensionProcessor.extension_for_path(path)
-    return nil unless EXTS_FOR_TAKEN_AT.includes?(extension)
+    return EXTS_FOR_TAKEN_AT.includes?(extension)
+  end
+
+  def self.taken_at_for_path(path, location = LOCAL_LOCATION)
+    return nil unless valid_extension_for_taken_at?(path)
 
     return taken_at_for_path!(path, location)
   end

@@ -3,6 +3,7 @@ require "../entity"
 # missing data can be fetched from real file
 class Scanner::FullCache::RealFile::Factories::FromFile
   def initialize(path : Path | String)
+    @t = Time.local.to_unix_ns
     @path = Path.new(path)
   end
 
@@ -17,6 +18,8 @@ class Scanner::FullCache::RealFile::Factories::FromFile
       taken_at: nil,
       taken_at_missing: nil
     )
+
+    # TODO: add processors usage here
 
     return instance
   end

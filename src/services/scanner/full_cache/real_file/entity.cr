@@ -5,6 +5,8 @@ require "./processors/mime_processor"
 require "./processors/taken_at_processor"
 require "./processors/extension_processor"
 
+# TODO: refactor this to remove all processors and move it to factory
+
 # Information about real file on disk
 struct Scanner::FullCache::RealFile::Entity
   @taken_at : Time?
@@ -106,17 +108,26 @@ struct Scanner::FullCache::RealFile::Entity
     return @taken_at_missing
   end
 
-  private def refresh_taken_at_if_needed
-    if @taken_at.nil?
-      ta = Processors::TakenAtProcessor.taken_at_for_path(@path)
-      if ta.nil?
-        # puts "#{@path} - taken_at missing"
-        @taken_at_missing = true
-        @taken_at = nil
-      else
-        @taken_at_missing = nil
-        @taken_at = ta
-      end
+  def refresh_taken_at_needed?
+    return false unless Processors::TakenAtProcessor.valid_extension_for_taken_at?(@path)
+    return true if @taken_at.nil? && @taken_at_missing != true
+    return false
+  end
+
+  def refresh_taken_at_if_needed
+    if refresh_taken_at_needed?
+      refresh_taken_at!
+    end
+  end
+
+  def refresh_taken_at!
+    ta = Processors::TakenAtProcessor.taken_at_for_path(@path)
+    if ta.nil?
+      @taken_at_missing = true
+      @taken_at = nil
+    else
+      @taken_at_missing = nil
+      @taken_at = ta
     end
   end
 end
