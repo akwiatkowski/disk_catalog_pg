@@ -1,7 +1,10 @@
 class FullCache::Scanner::Processors::Size
   @size : Int64?
 
-  def initialize(@file_path : String)
+  def initialize(
+    @file_path : String,
+    @lg : Ui::Lg
+  )
   end
 
   def call
@@ -20,7 +23,7 @@ class FullCache::Scanner::Processors::Size
   private def get_data
     return if @size
 
-    Lg.thrivial(
+    @lg.thrivial(
       place: self.class,
       message: "size info",
       path: @file_path

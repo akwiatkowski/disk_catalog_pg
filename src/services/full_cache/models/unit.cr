@@ -1,3 +1,5 @@
+require "yaml"
+
 # File-like entity used in full cache container
 # Path is not included here becase this is used in serialization
 # {path: unit, path: unit}
@@ -26,5 +28,18 @@ struct FullCache::Models::Unit
     @taken_at,
     @taken_at_missing
   )
+  end
+
+  def to_h
+    {
+      hash:              @hash,
+      size:              SizeTools.to_human(@size),
+      cache_time:        @cache_time,
+      modification_time: @modification_time,
+      mime_type:         @mime_type,
+      is_directory:      @is_directory,
+      taken_at:          @taken_at,
+      taken_at_missing:  @taken_at_missing,
+    }
   end
 end

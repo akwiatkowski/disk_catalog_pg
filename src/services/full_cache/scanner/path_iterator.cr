@@ -5,6 +5,7 @@ class FullCache::Scanner::PathIterator
     @stats_storage : StatsStorage,
     @periodic : Periodic,
     @ignored_paths : Array(String),
+    @lg : Ui::Lg
   )
   end
 
@@ -13,7 +14,7 @@ class FullCache::Scanner::PathIterator
       next if ScannedListCache.is_path_ignored?(file_path, @ignored_paths)
       next if File.symlink?(file_path)
 
-      Lg.debug(
+      @lg.debug(
         place: self.class,
         message: "rescan",
         path: file_path
@@ -23,6 +24,6 @@ class FullCache::Scanner::PathIterator
 
       @periodic.call
     end
-    @cache.save
+    @periodic.call_when_finish
   end
 end

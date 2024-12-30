@@ -11,6 +11,7 @@ class FullCache::Scanner::Processors::TakenAt
 
   def initialize(
     @file_path : String,
+    @lg : Ui::Lg,
     @location = LOCAL_LOCATION
   )
     @extension = Path.new(@file_path).extension.gsub(/^\./, "").to_s.downcase
@@ -47,7 +48,7 @@ class FullCache::Scanner::Processors::TakenAt
   private def get_data
     return if @processed
 
-    Lg.info(
+    @lg.info(
       place: self.class,
       message: "taken_at info ",
       path: @file_path
@@ -57,7 +58,7 @@ class FullCache::Scanner::Processors::TakenAt
       @taken_at = process_taken_at
       @taken_at_missing = true if @taken_at.nil?
 
-      Lg.info(
+      @lg.info(
         place: self.class,
         message: "taken_at=#{@taken_at}, taken_at_missing=#{@taken_at_missing}",
         path: @file_path
@@ -71,7 +72,7 @@ class FullCache::Scanner::Processors::TakenAt
     command = "exiftool -T -DateTimeOriginal \"#{@file_path}\""
     result = `#{command}` # 2019:10:12 20:00:45
     begin
-      return taken_at = Time.parse(
+      return Time.parse(
         result,
         "%Y:%m:%d %H:%M:%S",
         @location

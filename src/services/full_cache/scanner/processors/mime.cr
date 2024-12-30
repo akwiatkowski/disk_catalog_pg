@@ -1,7 +1,10 @@
 class FullCache::Scanner::Processors::Mime
   @mime_type : String?
 
-  def initialize(@file_path : String)
+  def initialize(
+    @file_path : String,
+    @lg : Ui::Lg
+  )
   end
 
   def call
@@ -20,7 +23,7 @@ class FullCache::Scanner::Processors::Mime
   private def get_data
     return if @mime_type
 
-    Lg.info(
+    @lg.info(
       place: self.class,
       message: "mime type info",
       path: @file_path

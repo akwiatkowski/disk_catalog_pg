@@ -8,12 +8,17 @@ class FullCache::Scanner::Cache
     @disk : Disk,
     @local_path : String,
     @stats_storage : StatsStorage,
-    @ignored_paths : Array(String)? = nil
+    @lg : Ui::Lg,
+    @curses : Ui::Curses,
+    @ignored_paths : Array(String)? = nil,
   )
     @cache_path = "#{@local_path}/#{disk.slug}.yml"
     @backup_cache_path = "#{@local_path}/#{disk.slug}.yml.bak"
 
-    @container = Factories::ContainerFactory.from_disk(
+    @container_factory = Factories::ContainerFactory.new(
+      lg: @lg
+    )
+    @container = @container_factory.from_disk(
       disk: @disk
     ).as(Models::Container)
   end
@@ -22,12 +27,14 @@ class FullCache::Scanner::Cache
     existing_unit = @container[file_path]?
     processor = Processors::Main.new(
       file_path: file_path,
-      existing_unit: existing_unit
+      existing_unit: existing_unit,
+      lg: @lg,
+      stats_storage: @stats_storage
     )
     new_unit = processor.call
     if new_unit
       # get new instance and update in container
-      Lg.info(
+      @lg.info(
         place: self.class,
         message: "updating",
         path: file_path
@@ -36,6 +43,11 @@ class FullCache::Scanner::Cache
 
       @stats_storage.after_updating_unit(
         unit: new_unit
+      )
+      @curses.refresh_last_file_details_and_stats(
+        file_path: file_path,
+        unit: new_unit,
+        stats_storage: @stats_storage
       )
     else
       # nothing
@@ -55,20 +67,20 @@ class FullCache::Scanner::Cache
 
   def call
     if cache_exists?
-      Lg.info(
+      @lg.info(
         place: self.class,
         message: "loading disk cache",
         path: @cache_path
       ) do
         load_cache
       end
-      Lg.important(
+      @lg.important(
         place: self.class,
         message: "load finished with #{@container.total_file_count} files, #{SizeTools.to_human(@container.total_file_size)}"
       )
     else
       create_cache
-      Lg.info(
+      @lg.info(
         place: self.class,
         message: "created disk cache because not exist"
       )
@@ -78,7 +90,7 @@ class FullCache::Scanner::Cache
   end
 
   def save
-    Lg.important(
+    @lg.important(
       place: self.class,
       message: "saving disk cache with #{@container.total_file_count}",
       path: @cache_path
@@ -108,14 +120,14 @@ class FullCache::Scanner::Cache
 
   private def load_cache
     return unless cache_exists?
-    @container = Factories::ContainerFactory.from_cache_path(
+    @container = @container_factory.from_cache_path(
       path: @cache_path,
       ignored_paths: @ignored_paths
     )
   end
 
   private def create_cache
-    @container = Factories::ContainerFactory.from_disk(
+    @container = @container_factory.from_disk(
       disk: @disk,
       ignored_paths: @ignored_paths
     )
@@ -127,7 +139,7 @@ class FullCache::Scanner::Cache
         old_filename: @cache_path,
         new_filename: @backup_cache_path
       )
-      Lg.debug(
+      @lg.debug(
         place: self.class,
         message: "renamed #{@cache_path} to #{@backup_cache_path}"
       )

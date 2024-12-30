@@ -1,5 +1,3 @@
-require "../tools/all"
-
 require "./disk_scanner"
 
 class FullCache::Scanner::ScannedListCache
@@ -7,12 +5,14 @@ class FullCache::Scanner::ScannedListCache
     disk : Disk,
     @local_path : String,
     @ignored_paths : Array(String),
-    @stats_storage : StatsStorage
+    @stats_storage : StatsStorage,
+    @lg : Ui::Lg
   )
     @disk_scanner = DiskScanner.new(
-      path: Path.new(disk.path.to_s)
+      path: Path.new(disk.path.to_s),
+      lg: @lg
     )
-    @scanned_cache_path = "#{@local_path}/#{disk.slug}.scan.yml"
+    @scanned_cache_path = "#{@local_path}/#{disk.slug}.scan.txt"
     @file_paths = Array(String).new
   end
 
@@ -24,12 +24,21 @@ class FullCache::Scanner::ScannedListCache
 
   private def load_cache
     return unless cache_exists?
-    @file_paths = Array(String).from_yaml(File.open(@scanned_cache_path))
+    @file_paths = Array(String).new
+
+    File.each_line(
+      filename: @scanned_cache_path
+    ) do |file_path|
+      @file_paths << file_path
+    end
   end
 
   private def save_cache
-    File.open(@scanned_cache_path, "wb") do |f|
-      @file_paths.to_yaml(f)
+    File.open(@scanned_cache_path, "wb") do |file|
+      @file_paths.sort.each do |file_path|
+        file << file_path
+        file << "\n"
+      end
     end
   end
 
@@ -52,12 +61,12 @@ class FullCache::Scanner::ScannedListCache
       end
     end
 
-    Lg.info(
+    @lg.info(
       place: self.class,
       message: "filtered out #{total_ignored_count} because of ignored_paths=#{@ignored_paths}"
     )
 
-    Lg.info(
+    @lg.info(
       place: self.class,
       message: "saving scan disk cache #{@file_paths.size}"
     ) do
@@ -67,24 +76,24 @@ class FullCache::Scanner::ScannedListCache
 
   def call
     if cache_exists?
-      Lg.info(
+      @lg.info(
         place: self.class,
         message: "loading scan disk cache"
       ) do
         load_cache
       end
-      Lg.info(
+      @lg.info(
         place: self.class,
         message: "load finished with #{@file_paths.size}"
       )
     else
-      Lg.info(
+      @lg.info(
         place: self.class,
         message: "performing scan disk cache"
       ) do
         create_cache
       end
-      Lg.info(
+      @lg.info(
         place: self.class,
         message: "perform finished with #{@file_paths.size}"
       )

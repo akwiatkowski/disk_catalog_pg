@@ -1,6 +1,8 @@
 require "colorize"
 
-class Lg
+require "./curses"
+
+class FullCache::Ui::Lg
   # https://crystal-lang.org/api/master/Colorize.html
   COLOR_ERROR     = :red
   COLOR_INFO      = :green
@@ -20,19 +22,32 @@ class Lg
     "important" => true,
   }
 
-  LEVELS_CHARS = {
-    "error"     => "E".colorize.fore(COLOR_ERROR),
-    "info"      => "I".colorize.fore(COLOR_INFO),
-    "important" => "!".colorize.fore(COLOR_IMPORTANT),
-    "debug"     => "D".colorize.fore(COLOR_DEBUG),
-    "thrivial"  => ".".colorize.fore(COLOR_THRIVIAL),
+  LEVELS_FORCE_REFRESH = {
+    "thrivial"  => false,
+    "debug"     => false,
+    "info"      => false,
+    "error"     => true,
+    "important" => true,
   }
+
+  LEVELS_CHARS = {
+    "error"     => "E", # .colorize.fore(COLOR_ERROR),
+    "info"      => "I", # .colorize.fore(COLOR_INFO),
+    "important" => "!", # .colorize.fore(COLOR_IMPORTANT),
+    "debug"     => "D", # .colorize.fore(COLOR_DEBUG),
+    "thrivial"  => ".", # .colorize.fore(COLOR_THRIVIAL),
+  }
+
+  def initialize(
+    @curses : Curses
+  )
+  end
 
   # TODO:
   # add ability to enable/disable various levels
   # refactor to make more DRY
 
-  def self.error(
+  def error(
     place,
     message : String,
     path : (String | Path | Nil) = nil
@@ -41,13 +56,13 @@ class Lg
       level: "error",
       place: place,
       path: path,
-      message: message.colorize.fore(COLOR_ERROR).to_s
+      message: message # .colorize.fore(COLOR_ERROR).to_s
     )
   end
 
   # ## info
 
-  def self.info(
+  def info(
     place,
     message : String,
     path : (String | Path | Nil) = nil
@@ -60,7 +75,7 @@ class Lg
     )
   end
 
-  def self.info(
+  def info(
     place,
     message : String,
     path : (String | Path | Nil) = nil,
@@ -78,7 +93,7 @@ class Lg
 
   # ## important
 
-  def self.important(
+  def important(
     place,
     message : String,
     path : (String | Path | Nil) = nil
@@ -87,11 +102,11 @@ class Lg
       level: "important",
       place: place,
       path: path,
-      message: message.colorize.fore(COLOR_IMPORTANT).to_s
+      message: message # .colorize.fore(COLOR_IMPORTANT).to_s
     )
   end
 
-  def self.important(
+  def important(
     place,
     message : String,
     path : (String | Path | Nil) = nil,
@@ -101,15 +116,15 @@ class Lg
       level: "important",
       place: place,
       path: path,
-      message: message.colorize.fore(COLOR_IMPORTANT).to_s
-    ) do
+      message: message # .colorize.fore(COLOR_IMPORTANT).to_s
+) do
       yield
     end
   end
 
   # ## debug
 
-  def self.debug(
+  def debug(
     place,
     message : String,
     path : (String | Path | Nil) = nil
@@ -118,11 +133,11 @@ class Lg
       level: "debug",
       place: place,
       path: path,
-      message: message.colorize.fore(COLOR_DEBUG).to_s
+      message: message # .colorize.fore(COLOR_DEBUG).to_s
     )
   end
 
-  def self.debug(
+  def debug(
     place,
     message : String,
     path : (String | Path | Nil) = nil,
@@ -132,15 +147,15 @@ class Lg
       level: "debug",
       place: place,
       path: path,
-      message: message.colorize.fore(COLOR_DEBUG).to_s
-    ) do
+      message: message # .colorize.fore(COLOR_DEBUG).to_s
+) do
       yield
     end
   end
 
   # ## thrivial
 
-  def self.thrivial(
+  def thrivial(
     place,
     message : String,
     path : (String | Path | Nil) = nil
@@ -149,11 +164,11 @@ class Lg
       level: "thrivial",
       place: place,
       path: path,
-      message: message.colorize.fore(COLOR_THRIVIAL).to_s
+      message: message # .colorize.fore(COLOR_THRIVIAL).to_s
     )
   end
 
-  def self.thrivial(
+  def thrivial(
     place,
     message : String,
     path : (String | Path | Nil) = nil,
@@ -163,28 +178,29 @@ class Lg
       level: "thrivial",
       place: place,
       path: path,
-      message: message.colorize.fore(COLOR_THRIVIAL).to_s
-    ) do
+      message: message # .colorize.fore(COLOR_THRIVIAL).to_s
+) do
       yield
     end
   end
 
   # ## log
 
-  def self.render_string(
+  def render_string(
     level,
     place,
     message,
     path
   )
-    return "#{time_string} #{LEVELS_CHARS[level]}:#{convert_place(place)} - #{message} #{path.to_s.colorize.fore(COLOR_PATH)}".strip.gsub(/\s{2,10}/, "")
+    # return "#{time_string} #{LEVELS_CHARS[level]}:#{convert_place(place)} - #{message} #{path.to_s.colorize.fore(COLOR_PATH)}".strip.gsub(/\s{2,10}/, "")
+    return "#{time_string} #{LEVELS_CHARS[level]}:#{convert_place(place)} - #{message} #{path.to_s}"
   end
 
-  def self.enabled?(level)
+  def enabled?(level)
     return LEVELS_ENABLED[level]
   end
 
-  def self.log(
+  def log(
     level,
     place,
     path : (String | Path | Nil),
@@ -196,10 +212,13 @@ class Lg
       message: message,
       path: path
     )
-    puts string if enabled?(level)
+    append_log_line(
+      string: string,
+      force: LEVELS_FORCE_REFRESH[level]
+    ) if enabled?(level)
   end
 
-  def self.log(
+  def log(
     level,
     place,
     path : (String | Path | Nil),
@@ -212,20 +231,36 @@ class Lg
       message: message,
       path: path
     )
-    puts string if enabled?(level)
+    append_log_line(
+      string: string,
+      force: LEVELS_FORCE_REFRESH[level]
+    ) if enabled?(level)
 
     t = Time.local
     yield
     ts = (Time.local - t).total_microseconds
 
-    puts "#{string} (#{convert_us_to_readable(ts)})" if enabled?(level)
+    append_log_line(
+      string: "#{string} (#{convert_us_to_readable(ts)})",
+      force: LEVELS_FORCE_REFRESH[level]
+    ) if enabled?(level)
   end
 
-  def self.convert_place(place)
-    place.to_s.split(/::/).last.colorize.fore(COLOR_PLACE)
+  def append_log_line(
+    string : String,
+    force : Bool
+  )
+    @curses.append_log_line(
+      string: string,
+      force: force
+    )
   end
 
-  def self.convert_us_to_readable(us_span)
+  def convert_place(place)
+    place.to_s.split(/::/).last # .colorize.fore(COLOR_PLACE)
+  end
+
+  def convert_us_to_readable(us_span)
     if us_span < 10_000
       # 10ms
       span_string = "#{us_span.to_i}us"
@@ -238,10 +273,10 @@ class Lg
       span_string = "#{(us_span / 1000_000.0).to_i / 60.0}min"
     end
 
-    return span_string.colorize.fore(COLOR_TIME)
+    return span_string # .colorize.fore(COLOR_TIME)
   end
 
-  def self.time_string
+  def time_string
     # return Time.local.to_s("%Y-%m-%d %H:%M:%S.%3N")
     return Time.local.to_s("%H:%M:%S.%3N")
   end

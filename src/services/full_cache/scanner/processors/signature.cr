@@ -3,7 +3,10 @@ require "digest/md5"
 class FullCache::Scanner::Processors::Signature
   @hash : String?
 
-  def initialize(@file_path : String)
+  def initialize(
+    @file_path : String,
+    @lg : Ui::Lg
+  )
   end
 
   def call
@@ -22,7 +25,7 @@ class FullCache::Scanner::Processors::Signature
   private def get_data
     return if @hash
 
-    Lg.info(
+    @lg.info(
       place: self.class,
       message: "hash signature info",
       path: @file_path

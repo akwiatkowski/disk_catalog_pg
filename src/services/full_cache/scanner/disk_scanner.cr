@@ -1,12 +1,15 @@
 class FullCache::Scanner::DiskScanner
-  def initialize(@path : Path)
+  def initialize(
+    @path : Path,
+    @lg : Ui::Lg
+  )
     @file_paths = Array(String).new
   end
 
   getter :path, :file_paths
 
   def call
-    Lg.info(
+    @lg.info(
       place: self.class,
       message: "scanning disk",
       path: @path
@@ -14,7 +17,7 @@ class FullCache::Scanner::DiskScanner
       scan_path
     end
 
-    Lg.info(
+    @lg.info(
       place: self.class,
       message: "scan finished with #{@file_paths.size}",
       path: @path
@@ -40,7 +43,7 @@ class FullCache::Scanner::DiskScanner
 
     after_filter_count = @file_paths.size
 
-    Lg.info(
+    @lg.info(
       place: self.class,
       message: "filtered directories from #{before_filter_count} to #{after_filter_count}"
     )

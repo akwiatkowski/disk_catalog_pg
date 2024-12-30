@@ -2,7 +2,10 @@ class FullCache::Scanner::Processors::Basic
   @modification_time : Time?
   @is_directory : Bool?
 
-  def initialize(@file_path : String)
+  def initialize(
+    @file_path : String,
+    @lg : Ui::Lg
+  )
   end
 
   def call
@@ -25,7 +28,7 @@ class FullCache::Scanner::Processors::Basic
   private def get_data
     return if @modification_time && @is_directory != nil
 
-    Lg.thrivial(
+    @lg.thrivial(
       place: self.class,
       message: "basic info",
       path: @file_path

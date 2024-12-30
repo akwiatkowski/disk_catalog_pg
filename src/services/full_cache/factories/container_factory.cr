@@ -1,7 +1,12 @@
 require "../models/container"
 
 class FullCache::Factories::ContainerFactory
-  def self.from_disk(
+  def initialize(
+    @lg : Ui::Lg
+  )
+  end
+
+  def from_disk(
     disk : Disk,
     ignored_paths : Array(String)? = nil
   ) : Models::Container
@@ -25,7 +30,7 @@ class FullCache::Factories::ContainerFactory
     )
   end
 
-  def self.from_cache_path(
+  def from_cache_path(
     path,
     ignored_paths : Array(String)? = nil
   ) : Models::Container
@@ -38,27 +43,27 @@ class FullCache::Factories::ContainerFactory
     container
   end
 
-  def self.disk_sizes(disk_path)
+  def disk_sizes(disk_path)
     if File.exists?(disk_path)
       begin
         total_disk_size = disk_size_for_disk(disk_path)
         avail_disk_size = disk_free_size_for_disk(disk_path)
       rescue IndexError
-        Lg.error(
+        @lg.error(
           place: self,
           message: "problem with getting disk size",
           path: disk_path
         )
       end
-      Lg.info(
-        place: self,
+      @lg.info(
+        place: self.class,
         message: "disk #{disk_path}, total_size=#{SizeTools.to_human(total_disk_size)}, avail_size=#{SizeTools.to_human(avail_disk_size)}"
       )
       return {total_disk_size: total_disk_size, avail_disk_size: avail_disk_size}
     end
   end
 
-  def self.disk_size_for_disk(disk_path)
+  def disk_size_for_disk(disk_path)
     command = "df --output=size -BM \"#{disk_path}\""
     result = `#{command}`
     result_mb_string = result.scan(/(\d+)M/)
@@ -66,7 +71,7 @@ class FullCache::Factories::ContainerFactory
     return result_mb
   end
 
-  def self.disk_free_size_for_disk(disk_path)
+  def disk_free_size_for_disk(disk_path)
     command = "df --output=avail -BM \"#{disk_path}\""
     result = `#{command}`
     result_mb_string = result.scan(/(\d+)M/)

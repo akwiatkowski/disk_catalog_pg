@@ -32,6 +32,10 @@ shards:
     git: https://github.com/elorest/compiled_license.git
     version: 1.2.2
 
+  crt:
+    git: https://github.com/maiha/crt.cr.git
+    version: 0.4.2
+
   db:
     git: https://github.com/crystal-lang/crystal-db.git
     version: 0.11.0
@@ -86,7 +90,7 @@ shards:
 
   micrate:
     git: https://github.com/amberframework/micrate.git
-    version: 0.15.0
+    version: 0.15.1
 
   mysql:
     git: https://github.com/crystal-lang/crystal-mysql.git
@@ -94,7 +98,7 @@ shards:
 
   optarg:
     git: https://github.com/amberframework/optarg.git
-    version: 0.9.3
+    version: 0.9.5
 
   pg:
     git: https://github.com/will/crystal-pg.git

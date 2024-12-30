@@ -1,10 +1,10 @@
-require "../tools/all"
+require "../ui/lg"
+require "../ui/curses"
 
 require "./stats_storage"
 require "./scanned_list_cache"
 require "./cache"
 require "./path_iterator"
-require "./stats_presenter"
 require "./periodic"
 
 class FullCache::Scanner::Main
@@ -14,23 +14,30 @@ class FullCache::Scanner::Main
   )
     # TODO: move outside from code
     @local_path = "/home/olek/.disk_catalog/full_cache/"
-    @stats_storage = StatsStorage.new
-    @stats_presenter = StatsPresenter.new(
-      stats_storage: @stats_storage,
+
+    @curses = Ui::Curses.new
+    @lg = Ui::Lg.new(
+      curses: @curses
+    )
+
+    @stats_storage = StatsStorage.new(
+      lg: @lg
     )
     @scanned_list_cache = ScannedListCache.new(
       disk: @disk,
       local_path: @local_path,
       ignored_paths: @ignored_paths,
-      stats_storage: @stats_storage
+      stats_storage: @stats_storage,
+      lg: @lg
     )
     @cache = Cache.new(
+      lg: @lg,
       disk: @disk,
       local_path: @local_path,
       stats_storage: @stats_storage,
+      curses: @curses
     )
     @periodic = Periodic.new(
-      stats_presenter: @stats_presenter,
       cache: @cache,
     )
     @path_iterator = PathIterator.new(
@@ -39,6 +46,7 @@ class FullCache::Scanner::Main
       stats_storage: @stats_storage,
       periodic: @periodic,
       ignored_paths: @ignored_paths,
+      lg: @lg
     )
   end
 

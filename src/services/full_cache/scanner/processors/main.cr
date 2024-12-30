@@ -17,20 +17,37 @@ class FullCache::Scanner::Processors::Main
 
   def initialize(
     @file_path : String,
-    @existing_unit : Models::Unit?
+    @existing_unit : Models::Unit?,
+    @lg : Ui::Lg,
+    @stats_storage : StatsStorage
   )
-    @basic = Basic.new(file_path: @file_path)
-    @size = Size.new(file_path: @file_path)
-    @signature = Signature.new(file_path: @file_path)
-    @mime = Mime.new(file_path: @file_path)
-    @taken_at = TakenAt.new(file_path: @file_path)
+    @basic = Basic.new(
+      file_path: @file_path,
+      lg: @lg
+    )
+    @size = Size.new(
+      file_path: @file_path,
+      lg: @lg
+    )
+    @signature = Signature.new(
+      file_path: @file_path,
+      lg: @lg
+    )
+    @mime = Mime.new(
+      file_path: @file_path,
+      lg: @lg
+    )
+    @taken_at = TakenAt.new(
+      file_path: @file_path,
+      lg: @lg
+    )
   end
 
   # create new Unit with all fields filled accordingly
   def call
     # keep in mind this flag is true if we scan new file
     if file_modified?
-      Lg.info(
+      @lg.info(
         place: self.class,
         message: "file modified",
         path: @file_path
@@ -71,7 +88,7 @@ class FullCache::Scanner::Processors::Main
 
       # check if something is missing
       if new_modification_time.nil?
-        Lg.debug(
+        @lg.debug(
           place: self.class,
           message: "missing modification_time",
           path: @file_path
@@ -79,10 +96,11 @@ class FullCache::Scanner::Processors::Main
         new_modification_time = @basic.modification_time
         @was_changed = true
         missing_keys << "modification_time"
+        @stats_storage.missed_key("modification_time")
       end
 
       if new_is_directory.nil?
-        Lg.debug(
+        @lg.debug(
           place: self.class,
           message: "missing is_directory",
           path: @file_path
@@ -90,10 +108,11 @@ class FullCache::Scanner::Processors::Main
         new_is_directory = @basic.is_directory
         @was_changed = true
         missing_keys << "is_directory"
+        @stats_storage.missed_key("is_directory")
       end
 
       if new_size.nil?
-        Lg.debug(
+        @lg.debug(
           place: self.class,
           message: "missing size",
           path: @file_path
@@ -101,10 +120,11 @@ class FullCache::Scanner::Processors::Main
         new_size = @size.size
         @was_changed = true
         missing_keys << "size"
+        @stats_storage.missed_key("size")
       end
 
       if new_hash.nil?
-        Lg.debug(
+        @lg.debug(
           place: self.class,
           message: "missing hash",
           path: @file_path
@@ -112,10 +132,11 @@ class FullCache::Scanner::Processors::Main
         new_hash = @signature.hash
         @was_changed = true
         missing_keys << "hash"
+        @stats_storage.missed_key("hash")
       end
 
       if new_mime_type.nil?
-        Lg.debug(
+        @lg.debug(
           place: self.class,
           message: "missing mime_type",
           path: @file_path
@@ -123,11 +144,12 @@ class FullCache::Scanner::Processors::Main
         new_mime_type = @mime.mime_type
         @was_changed = true
         missing_keys << "mime_type"
+        @stats_storage.missed_key("mime_type")
       end
 
       if @taken_at.valid_extenstion?
         if new_taken_at.nil? && new_taken_at_missing.nil?
-          Lg.debug(
+          @lg.debug(
             place: self.class,
             message: "missing taken_at",
             path: @file_path
@@ -136,11 +158,12 @@ class FullCache::Scanner::Processors::Main
           new_taken_at_missing = @taken_at.taken_at_missing
           @was_changed = true
           missing_keys << "taken_at"
+          @stats_storage.missed_key("taken_at")
         end
       end
 
       if missing_keys.size > 0
-        Lg.info(
+        @lg.info(
           place: self.class,
           message: "fields missed: #{missing_keys.sort.join(",")}",
           path: @file_path
@@ -176,7 +199,7 @@ class FullCache::Scanner::Processors::Main
          @size.size != @existing_unit.not_nil!.size
         @file_modified = true
 
-        Lg.info(
+        @lg.info(
           place: self.class,
           message: "file was changed from version in cache",
           path: @file_path
